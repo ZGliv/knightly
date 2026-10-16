@@ -17,7 +17,7 @@ interface ChessBoardProps {
   canInteract: boolean;
   isMoveLegal: (from: string, to: string) => boolean;
   getLegalTargets: (from: string) => string[];
-  onMove: (from: string, to: string) => Promise<boolean>;
+  onMove: (from: string, to: string, promotion?: string) => Promise<boolean>;
 }
 
 export function ChessBoard({
@@ -29,6 +29,7 @@ export function ChessBoard({
   getLegalTargets,
   onMove,
 }: ChessBoardProps) {
+  const [promotion, setPromotion] = useState("q");
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [highlightedTargets, setHighlightedTargets] = useState<string[]>([]);
 
@@ -55,6 +56,9 @@ export function ChessBoard({
 
   return (
     <div className="w-full max-w-[580px] rounded-xl border border-zinc-800 bg-zinc-900 p-3 shadow-2xl">
+      <p className="mb-3 text-xs text-zinc-400">
+        Tap a piece, then a highlighted square. Or drag a piece.
+      </p>
       {/* This provides an MVP-friendly board with custom dark-square contrast. */}
       <Chessboard
         options={{
@@ -65,7 +69,7 @@ export function ChessBoard({
             if (!isMoveLegal(sourceSquare, targetSquare)) return false;
             setSelectedSquare(null);
             setHighlightedTargets([]);
-            void onMove(sourceSquare, targetSquare);
+            void onMove(sourceSquare, targetSquare, promotion);
             return true;
           },
           onPieceClick: ({ piece, square }) => {
@@ -81,9 +85,17 @@ export function ChessBoard({
               return;
             }
 
+            if (selectedSquare && isMoveLegal(selectedSquare, square)) {
+              void onMove(selectedSquare, square, promotion);
+              setSelectedSquare(null);
+              setHighlightedTargets([]);
+              return;
+            }
+
             if (piece) {
-              const pieceColor =
-                piece.pieceType.startsWith("w") ? "white" : "black";
+              const pieceColor = piece.pieceType.startsWith("w")
+                ? "white"
+                : "black";
               if (pieceColor === playerColor && activeColor === playerColor) {
                 // This toggles the selected piece when clicked twice.
                 if (selectedSquare === square) {
@@ -105,7 +117,9 @@ export function ChessBoard({
           canDragPiece: ({ piece }) => {
             // This limits dragging to the user's own pieces only on the user's turn.
             if (!canInteract) return false;
-            const pieceColor = piece.pieceType.startsWith("w") ? "white" : "black";
+            const pieceColor = piece.pieceType.startsWith("w")
+              ? "white"
+              : "black";
             return pieceColor === playerColor && activeColor === playerColor;
           },
           squareStyles,
@@ -116,6 +130,22 @@ export function ChessBoard({
           animationDurationInMs: 180,
         }}
       />
+      {canInteract && (
+        <label className="mt-3 flex items-center justify-between gap-2 text-xs text-zinc-400">
+          Promote pawns to
+          <select
+            aria-label="Promotion piece"
+            value={promotion}
+            onChange={(e) => setPromotion(e.target.value)}
+            className="rounded border border-zinc-700 bg-zinc-950 p-2 text-zinc-100"
+          >
+            <option value="q">Queen</option>
+            <option value="r">Rook</option>
+            <option value="b">Bishop</option>
+            <option value="n">Knight</option>
+          </select>
+        </label>
+      )}
     </div>
   );
 }

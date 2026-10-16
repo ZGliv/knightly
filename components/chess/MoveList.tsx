@@ -45,15 +45,19 @@ export function MoveList({ moves }: MoveListProps) {
               className="grid grid-cols-[40px_1fr_1fr] items-center gap-2"
             >
               <span className="text-zinc-500">{row.moveNumber}.</span>
-              <div className="flex items-center gap-2 rounded-md bg-zinc-800 px-2 py-1">
-                <span className="font-medium text-zinc-100">{row.white.san}</span>
+              <div className="flex flex-wrap items-center gap-2 rounded-md bg-zinc-800 px-2 py-1">
+                <span className="font-medium text-zinc-100">
+                  {row.white.san}
+                </span>
                 {row.white.classification ? (
                   <span
                     className={`rounded px-1.5 py-0.5 text-xs ${badgeClass(
                       row.white.classification,
                     )}`}
                   >
-                    {row.white.classification}
+                    {row.white.classification === "best"
+                      ? "near best"
+                      : row.white.classification}
                   </span>
                 ) : null}
               </div>

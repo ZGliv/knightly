@@ -1,59 +1,49 @@
-/*
- * File: hooks/useEngine.ts
- * Description: React hook wrapper around the Stockfish client for position analysis and engine-move generation.
- * Functions:
- * - useEngine: Initializes and exposes engine helpers for analysis requests.
- */
-
 "use client";
-
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StockfishClient } from "@/lib/engine/stockfish-client";
 
 export function useEngine() {
-  const [ready, setReady] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const clientRef = useRef<StockfishClient | null>(null);
-
+  const client = useRef<StockfishClient | null>(null);
+  const [generation, setGeneration] = useState(0);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [error, setError] = useState("");
   useEffect(() => {
-    // This avoids worker creation during server-side rendering.
-    if (typeof window === "undefined") return;
-
-    const engineClient = new StockfishClient();
-    clientRef.current = engineClient;
-    let mounted = true;
-
-    // This starts the UCI handshake once on mount.
-    engineClient
+    let live = true;
+    const next = new StockfishClient();
+    client.current = next;
+    next
       .init()
       .then(() => {
-        if (!mounted) return;
-        setReady(true);
+        if (live) setStatus("ready");
       })
-      .catch(() => {
-        if (!mounted) return;
-        setFailed(true);
+      .catch((e: Error) => {
+        if (live) {
+          setError(e.message);
+          setStatus("error");
+        }
       });
-
     return () => {
-      mounted = false;
-      engineClient.terminate();
-      clientRef.current = null;
+      live = false;
+      next.terminate();
+      if (client.current === next) client.current = null;
     };
+  }, [generation]);
+  const analyze = useCallback(async (fen: string, skill = 20) => {
+    if (!client.current) throw new Error("Engine is still loading.");
+    try {
+      return await client.current.analyzePosition(fen, skill);
+    } catch (e) {
+      setStatus("error");
+      setError((e as Error).message);
+      throw e;
+    }
   }, []);
-
-  return {
-    ready,
-    failed,
-    setSkillLevel: async (level: number) => {
-      if (!clientRef.current) return;
-      await clientRef.current.setSkillLevel(level);
-    },
-    analyzePosition: async (fen: string, depth = 10) => {
-      if (!clientRef.current) {
-        throw new Error("Engine not initialized yet.");
-      }
-      return clientRef.current.analyzePosition(fen, depth);
-    },
-  };
+  const restart = useCallback(() => {
+    setStatus("loading");
+    setError("");
+    setGeneration((v) => v + 1);
+  }, []);
+  return { status, error, analyze, restart };
 }

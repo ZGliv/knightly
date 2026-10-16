@@ -17,7 +17,9 @@ export function ReviewSummaryCard({ summary }: ReviewSummaryCardProps) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
       <h2 className="text-lg font-semibold text-zinc-100">Game Review</h2>
-      <p className="mt-1 text-sm text-zinc-400">Opening: {summary.openingName}</p>
+      <p className="mt-1 text-sm text-zinc-400">
+        Opening: {summary.openingName}
+      </p>
 
       <section className="mt-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">
@@ -25,7 +27,9 @@ export function ReviewSummaryCard({ summary }: ReviewSummaryCardProps) {
         </h3>
         <div className="mt-2 space-y-2">
           {summary.keyMistakes.length === 0 ? (
-            <p className="text-sm text-zinc-400">No major mistakes detected.</p>
+            <p className="text-sm text-zinc-400">
+              No measured evaluation drops to review yet.
+            </p>
           ) : (
             summary.keyMistakes.map((mistake) => (
               <div
@@ -45,7 +49,7 @@ export function ReviewSummaryCard({ summary }: ReviewSummaryCardProps) {
 
       <section className="mt-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">
-          Recurring Weaknesses
+          Observed Patterns
         </h3>
         <div className="mt-2 flex flex-wrap gap-2">
           {summary.recurringWeaknesses.length === 0 ? (
@@ -65,7 +69,7 @@ export function ReviewSummaryCard({ summary }: ReviewSummaryCardProps) {
 
       <section className="mt-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">
-          Recommended Next Drills
+          Try This Next
         </h3>
         <ul className="mt-2 space-y-2">
           {summary.recommendations.map((item) => (

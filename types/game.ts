@@ -1,21 +1,11 @@
-/*
- * File: types/game.ts
- * Description: Defines the shared TypeScript types used for chess games, move analysis, and review data.
- * Functions:
- * - This file only contains type declarations and does not define runtime functions.
- */
-
 export type PlayerColor = "white" | "black";
-
 export type MoveClassification =
   | "best"
   | "good"
   | "inaccuracy"
   | "mistake"
   | "blunder";
-
 export type GameResult = "1-0" | "0-1" | "1/2-1/2" | "*";
-
 export interface ClassifiedMove {
   ply: number;
   san: string;
@@ -24,14 +14,16 @@ export interface ClassifiedMove {
   evalCp: number | null;
   classification?: MoveClassification;
   coachText?: string;
+  cpLoss?: number;
+  bestSan?: string;
+  searchDepth?: number;
+  mateIn?: number | null;
 }
-
 export interface PhaseBreakdown {
-  opening: number;
-  middlegame: number;
-  endgame: number;
+  opening: number | null;
+  middlegame: number | null;
+  endgame: number | null;
 }
-
 export interface GameSummary {
   result: GameResult;
   openingName: string;
@@ -45,11 +37,11 @@ export interface GameSummary {
   phaseStrength: PhaseBreakdown;
   recommendations: string[];
 }
-
 export interface SavedGame {
   id: string;
   clientId: string;
   createdAt: string;
+  updatedAt?: string;
   playerColor: PlayerColor;
   engineLevel: number;
   result: GameResult;

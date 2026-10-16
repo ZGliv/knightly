@@ -1,0 +1,7 @@
+.git
+.env*
+output
+.playwright-cli
+tests
+supabase
+progress.md

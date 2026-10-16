@@ -1,65 +1,47 @@
-<!--
-File: README.md
-Description: Documents local setup, cloud configuration, and deployment flow for BuddyMine Chess Coach MVP.
-Functions:
-- This file explains installation, environment variables, Supabase setup, and Vercel deployment.
--->
-
 # BuddyMine Chess Coach
 
-Standalone MVP chess coaching web app where users play against an engine and receive live guidance plus a post-game review.
+**Understand your moves. Improve your game.**
 
-## 1) Local Setup
+A browser-first chess practice app. Play White against real Stockfish 18, save each move, return to an unfinished game, replay decisions, and move games between devices with PGN or JSON backups. No account, cloud database, AI API key, or paid service is required.
 
-1. Install Node.js 20 LTS and pnpm.
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-3. Copy environment template:
-   ```bash
-   cp .env.example .env.local
-   ```
-4. Start dev server:
-   ```bash
-   pnpm dev
-   ```
-5. Open [http://localhost:3000](http://localhost:3000).
+## Run
 
-## 2) Environment Variables
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
+```
 
-Set these in `.env.local` and in Vercel project env settings:
+`predev` and `prebuild` copy the pinned Stockfish 18.0.5 lite single-thread worker, WASM and GPL license from the installed package into `public/engine`. No runtime CDN or cross-origin isolation is needed. Production: `pnpm build && pnpm start`.
 
-- `NEXT_PUBLIC_APP_NAME=BuddyMine Chess Coach`
-- `NEXT_PUBLIC_ENABLE_CLOUD_SAVE=false` (set `true` to enable Supabase writes)
-- `NEXT_PUBLIC_SUPABASE_URL=` (required only for cloud save)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY=` (required only for cloud save)
-- `SUPABASE_SERVICE_ROLE_KEY=` (required only for cloud save API writes)
+## Core loop
 
-## 3) Supabase Setup (Optional Cloud Save)
+- Legal drag, tap and SAN/coordinate input; selectable promotion piece, castling, en passant, checkmate and draws through chess.js.
+- Every move is stored before analysis. An interrupted Black turn can be continued after reload. Engine load/search errors fail within a bound and provide retry.
+- Opponent skill 1–20 is independent of full-strength coaching. Each evaluation uses a 500 ms search; estimates may change with deeper searches and are not Elo or accuracy ratings.
+- Game replay, per-White-move reanalysis, measured review coverage and suggestions grounded in search output. No invented strategic explanations or scores for unplayed phases.
+- Autosaved library, PGN import/export and versioned JSON backup/import. Imports merge unknown IDs, never replace a same-ID local record. A previous browser snapshot and raw download support recovery; unreadable data is never silently replaced.
+- Legacy local game histories are retained under `buddymine_games_v1`. Legacy prose is marked unverified. Old unauthenticated cloud endpoints return 410 and no service-role client exists.
 
-1. Create a project in [Supabase Dashboard](https://supabase.com/dashboard).
-2. Open SQL Editor and run:
-   - `supabase/schema.sql`
-   - `supabase/rls.sql` (optional, recommended)
-3. Copy project URL + keys into `.env.local` and Vercel.
+## Privacy and limits
 
-## 4) Vercel Deploy
+Game records stay in localStorage for this origin. Browser clearing, private browsing and device loss can erase them: use **Games → Export all games**. Running games can continue offline once the page/worker has loaded, but a fully offline reload/install is not implemented. Only White and standard starting positions are supported. Backups accept up to 1,000 games / 8 MB; individual PGNs up to 200 KB. Imported player/event names are preserved. A PGN is a move record, not a backup of coach annotations.
 
-1. Push repo to GitHub.
-2. Import project at [Vercel New Project](https://vercel.com/new).
-3. Confirm framework is Next.js.
-4. Add all required env vars in Vercel.
-5. Deploy and share the generated URL.
+Local save conflicts are rejected if another tab updated the same game. The unsaved in-memory board remains exportable; reload to continue from the saved copy. This is a personal practice tool, not a multiplayer or tournament service. No human learner-outcome evaluation has been conducted.
 
-## 5) MVP Scope Implemented
+## Verification
 
-- Landing page, play page, games list, and review page.
-- Play against Stockfish engine via web worker.
-- Live move classification and plain-English coach messages.
-- Opening detection and post-game summary generation.
-- Local save by default; optional Supabase cloud save API routes.
+```sh
+pnpm test
+pnpm exec tsc --noEmit
+pnpm lint
+pnpm build
+pnpm audit --prod
+```
 
-## 6) Licensing Note
+The Node suite tests legal history and results, special moves/draws, storage recovery, backup merging, analysis sign conventions and worker request/error handling. `scripts/browser-*.js` are Playwright CLI function payloads exercised against a local production build on port 3025; they are not a claim of live end-to-end deployment testing.
 
-This project uses Stockfish (`GPL-3.0`). Keep attribution and license terms when distributing builds.
+## Deployment
+
+Use the existing `buddymine-chess-coach` Vercel project once created. No environment variables are required. Keep default deployment protection. `.vercelignore` excludes QA artifacts, historical SQL and local environment files. The original archived prototype remains untouched in its original directory.
+
+See [STOCKFISH_NOTICE.md](STOCKFISH_NOTICE.md) for engine license and corresponding source.

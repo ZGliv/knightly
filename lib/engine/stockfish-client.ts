@@ -1,148 +1,147 @@
-/*
- * File: lib/engine/stockfish-client.ts
- * Description: Provides a minimal queued UCI client for communicating with a Stockfish web worker.
- * Functions:
- * - StockfishClient.constructor: Initializes worker wiring and internal queue state.
- * - StockfishClient.init: Sends startup UCI commands once.
- * - StockfishClient.setSkillLevel: Sets Stockfish skill option for difficulty control.
- * - StockfishClient.analyzePosition: Returns best move and score for a FEN at a target depth.
- * - StockfishClient.terminate: Cleans up the worker when unmounting.
- */
-
-interface AnalysisResult {
+export interface EngineAnalysis {
   bestMove: string;
-  scoreCp: number;
+  scoreCp: number | null;
   mateIn: number | null;
-}
-
-interface PendingTask {
-  fen: string;
   depth: number;
-  resolve: (value: AnalysisResult) => void;
-  reject: (reason?: unknown) => void;
+  pv: string[];
 }
 
+type Request = {
+  fen: string;
+  skill: number;
+  resolve: (a: EngineAnalysis) => void;
+  reject: (e: Error) => void;
+};
+
+/** One UCI search at a time. A failed worker rejects every waiter; callers can start a fresh one. */
 export class StockfishClient {
-  private worker: Worker | null = null;
-  private initialized = false;
-  private initPromise: Promise<void> | null = null;
-  private queue: PendingTask[] = [];
-  private activeTask: PendingTask | null = null;
-  private lastScoreCp = 0;
-  private lastMateIn: number | null = null;
-  private initResolver: (() => void) | null = null;
+  private worker: Worker;
+  private pending: Request[] = [];
+  private active: Request | null = null;
+  private result: EngineAnalysis = {
+    bestMove: "",
+    scoreCp: null,
+    mateIn: null,
+    depth: 0,
+    pv: [],
+  };
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private failure: Error | null = null;
+  private ready: Promise<void>;
+  private readyResolve!: () => void;
+  private readyReject!: (e: Error) => void;
 
   constructor() {
-    // This bootstraps a same-origin worker and then imports Stockfish to avoid cross-origin worker blocking.
-    const bootstrapScript = `
-      importScripts("https://unpkg.com/stockfish@18.0.5/bin/stockfish-18-asm.js");
-    `;
-    const bootstrapUrl = URL.createObjectURL(
-      new Blob([bootstrapScript], { type: "application/javascript" }),
+    this.ready = new Promise((resolve, reject) => {
+      this.readyResolve = resolve;
+      this.readyReject = reject;
+    });
+    this.worker = new Worker("/engine/stockfish-18-lite-single.js");
+    this.worker.onmessage = ({ data }) => this.receive(String(data));
+    this.worker.onerror = () =>
+      this.fail(
+        new Error(
+          "Stockfish could not load. Check your connection, then retry the engine.",
+        ),
+      );
+    this.worker.onmessageerror = () =>
+      this.fail(
+        new Error(
+          "Stockfish returned an unreadable response. Retry the engine.",
+        ),
+      );
+    this.timer = setTimeout(
+      () =>
+        this.fail(
+          new Error("Stockfish took too long to load. Retry the engine."),
+        ),
+      20000,
     );
-    this.worker = new Worker(bootstrapUrl);
-    URL.revokeObjectURL(bootstrapUrl);
-
-    // This routes all UCI output through a single parser for queue-based requests.
-    this.worker.onmessage = (event: MessageEvent<string>) => {
-      this.handleEngineLine(event.data);
+    this.worker.postMessage("uci");
+  }
+  init() {
+    return this.ready;
+  }
+  async analyzePosition(fen: string, skill = 20): Promise<EngineAnalysis> {
+    await this.ready;
+    if (this.failure) throw this.failure;
+    return new Promise((resolve, reject) => {
+      this.pending.push({ fen, skill, resolve, reject });
+      this.next();
+    });
+  }
+  private next() {
+    if (this.active || this.failure || !this.pending.length) return;
+    this.active = this.pending.shift()!;
+    this.result = {
+      bestMove: "",
+      scoreCp: null,
+      mateIn: null,
+      depth: 0,
+      pv: [],
     };
+    this.worker.postMessage(
+      `setoption name Skill Level value ${Math.max(0, Math.min(20, this.active.skill))}`,
+    );
+    this.worker.postMessage("position fen " + this.active.fen);
+    // The same fixed search budget is used for both sides of a move comparison.
+    this.worker.postMessage("go movetime 500");
+    this.timer = setTimeout(
+      () =>
+        this.fail(
+          new Error(
+            "The engine stopped responding. Your position is saved; retry the engine.",
+          ),
+        ),
+      15000,
+    );
   }
-
-  init(): Promise<void> {
-    if (this.initialized) return Promise.resolve();
-    if (this.initPromise) return this.initPromise;
-
-    this.initPromise = new Promise<void>((resolve) => {
-      // This stores the resolver until a readyok line arrives from the engine.
-      this.initResolver = resolve;
-      this.send("uci");
-      this.send("isready");
-    });
-
-    return this.initPromise;
-  }
-
-  async setSkillLevel(level: number): Promise<void> {
-    await this.init();
-    const normalized = Math.max(0, Math.min(20, Math.round(level)));
-    this.send(`setoption name Skill Level value ${normalized}`);
-    this.send("isready");
-  }
-
-  async analyzePosition(fen: string, depth = 10): Promise<AnalysisResult> {
-    await this.init();
-
-    return new Promise<AnalysisResult>((resolve, reject) => {
-      // This stores requests and processes one UCI search at a time.
-      this.queue.push({ fen, depth, resolve, reject });
-      this.processQueue();
-    });
-  }
-
-  terminate(): void {
-    if (!this.worker) return;
-    this.send("quit");
-    this.worker.terminate();
-    this.worker = null;
-  }
-
-  private processQueue(): void {
-    if (this.activeTask || this.queue.length === 0) return;
-    this.activeTask = this.queue.shift() ?? null;
-    if (!this.activeTask) return;
-
-    // This resets score tracking for the active search task.
-    this.lastScoreCp = 0;
-    this.lastMateIn = null;
-
-    this.send("ucinewgame");
-    this.send(`position fen ${this.activeTask.fen}`);
-    this.send(`go depth ${this.activeTask.depth}`);
-  }
-
-  private send(command: string): void {
-    this.worker?.postMessage(command);
-  }
-
-  private handleEngineLine(rawLine: string): void {
-    const line = rawLine.trim();
-    if (!line) return;
-
-    // This completes initial handshake once the engine confirms readiness.
-    if (line === "readyok" && this.initResolver) {
-      this.initialized = true;
-      this.initResolver();
-      this.initResolver = null;
+  private receive(line: string) {
+    if (this.failure) return;
+    if (line === "uciok") {
+      this.worker.postMessage("setoption name Hash value 16");
+      this.worker.postMessage("isready");
     }
-
-    if (!this.activeTask) return;
-
-    // This extracts latest cp/mate score from UCI info lines.
-    if (line.startsWith("info")) {
-      // This parses numeric centipawn scores from engine info lines.
-      const cpMatch = line.match(/score cp (-?\d+)/);
-      if (cpMatch) this.lastScoreCp = Number(cpMatch[1]);
-
-      // This parses mate scores so forced mates are represented as large score swings.
-      const mateMatch = line.match(/score mate (-?\d+)/);
-      if (mateMatch) {
-        this.lastMateIn = Number(mateMatch[1]);
-        this.lastScoreCp = this.lastMateIn > 0 ? 10000 : -10000;
-      }
+    if (line === "readyok") {
+      clearTimeout(this.timer);
+      this.readyResolve();
       return;
     }
-
-    // This completes the task when UCI emits bestmove.
-    if (line.startsWith("bestmove")) {
-      const bestMove = line.split(" ")[1] ?? "(none)";
-      this.activeTask.resolve({
-        bestMove,
-        scoreCp: this.lastScoreCp,
-        mateIn: this.lastMateIn,
-      });
-      this.activeTask = null;
-      this.processQueue();
+    if (!this.active) return;
+    if (
+      line.startsWith("info ") &&
+      !line.includes(" upperbound ") &&
+      !line.includes(" lowerbound ")
+    ) {
+      const score = line.match(/\bscore (cp|mate) (-?\d+)/);
+      const depth = line.match(/\bdepth (\d+)/);
+      const pv = line.match(/\bpv (.+)/);
+      if (score) {
+        this.result.scoreCp = score[1] === "cp" ? Number(score[2]) : null;
+        this.result.mateIn = score[1] === "mate" ? Number(score[2]) : null;
+        this.result.depth = depth ? Number(depth[1]) : 0;
+        this.result.pv = pv ? pv[1].split(" ") : [];
+      }
     }
+    if (line.startsWith("bestmove ")) {
+      clearTimeout(this.timer);
+      const request = this.active;
+      this.active = null;
+      request.resolve({ ...this.result, bestMove: line.split(" ")[1] });
+      this.next();
+    }
+  }
+  private fail(error: Error) {
+    if (this.failure) return;
+    this.failure = error;
+    clearTimeout(this.timer);
+    this.readyReject(error);
+    this.active?.reject(error);
+    this.active = null;
+    this.pending.splice(0).forEach((request) => request.reject(error));
+    this.worker.terminate();
+  }
+  terminate() {
+    this.fail(new Error("Engine session ended."));
   }
 }

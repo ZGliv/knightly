@@ -1,30 +1,38 @@
 {
   "name": "buddymine-chess-coach",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "predev": "node scripts/copy-engine.mjs",
+    "prebuild": "node scripts/copy-engine.mjs",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.101.1",
     "chess.js": "^1.4.0",
-    "next": "16.2.2",
-    "react": "19.2.4",
+    "next": "16.4.2",
+    "react": "19.3.1",
     "react-chessboard": "^5.10.0",
-    "react-dom": "19.2.4",
-    "stockfish": "^18.0.5"
+    "react-dom": "19.3.1",
+    "stockfish": "18.0.5"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@babel/core": "7.29.6",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "baseline-browser-mapping": "2.11.0",
+    "browserslist": "4.28.8",
     "eslint": "^9",
-    "eslint-config-next": "16.2.2",
-    "tailwindcss": "^4",
+    "eslint-config-next": "16.4.2",
+    "source-map-js": "1.2.2",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@10.19.0"
 }
