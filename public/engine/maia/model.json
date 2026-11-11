@@ -1,0 +1,28 @@
+{
+  "model": "Maia-3 5M",
+  "upstream": "https://github.com/CSSLab/maia3",
+  "codeRevision": "1e13597c42d4858b7cfd7cfdae01e297263364b2",
+  "weightsRevision": "b6559de2398d7140b985f28fd2c19fb5e47ddabe",
+  "onnxSha256": "e3fa12194a96e9386b378df738e779f04f0c453247b7985f2e17df37ea5c8295",
+  "onnxRuntimeWeb": "1.24.3",
+  "sampling": "legal-mask softmax, temperature 1",
+  "history": 8,
+  "ratingPool": "Lichess",
+  "certifiedMatchRating": false,
+  "opponentTargets": {
+    "presets": [
+      400,
+      600,
+      800,
+      1000,
+      1200,
+      1400,
+      1600,
+      1800,
+      2000,
+      2200,
+      2400
+    ],
+    "preservedCustomMaximum": 3190
+  }
+}

@@ -2,14 +2,19 @@ import { Chess } from "chess.js";
 import type { ClassifiedMove } from "@/types/game";
 import type { EngineAnalysis } from "@/lib/engine/stockfish-client";
 import { classifyMove } from "./classification";
-export type Analyze = (fen: string, skill?: number) => Promise<EngineAnalysis>;
+export type Analyze = (fen: string, skill?: import("@/lib/engine/strength").EngineStrength, history?: string[]) => Promise<EngineAnalysis>;
 export async function analyzeMove(
   beforeFen: string,
   move: ClassifiedMove,
   analyze: Analyze,
+  history?: string[],
 ): Promise<ClassifiedMove> {
-  const before = await analyze(beforeFen, 20);
-  const afterChess = new Chess(move.fenAfter);
+  const before = await analyze(beforeFen, 20, history);
+  const afterChess = history ? new Chess() : new Chess(move.fenAfter);
+  if (history) {
+    for (const uci of [...history, move.uci]) afterChess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
+    if (afterChess.fen() !== move.fenAfter) throw new Error("Move history does not match the position.");
+  }
   const after = afterChess.isGameOver()
     ? {
         scoreCp: afterChess.isDraw() ? 0 : null,
@@ -18,7 +23,7 @@ export async function analyzeMove(
         bestMove: "",
         pv: [],
       }
-    : await analyze(move.fenAfter, 20);
+    : await analyze(move.fenAfter, 20, history ? [...history, move.uci] : undefined);
   const best = new Chess(beforeFen);
   let bestSan = "";
   try {
@@ -39,6 +44,9 @@ export async function analyzeMove(
         : `${move.san}: a mating line was found before this move. Compare the suggested ${bestSan || "continuation"} in the replay. No centipawn grade is assigned to mate scores.`;
     return {
       ...move,
+      cpLoss: undefined,
+      classification: undefined,
+      evalCp: null,
       bestSan,
       mateIn: after.mateIn,
       searchDepth: Math.min(before.depth, after.depth),

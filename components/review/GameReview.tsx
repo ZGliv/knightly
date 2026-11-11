@@ -1,11 +1,13 @@
 "use client";
+import { markGameAssisted } from "@/lib/learning/adaptive-rating";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Chess, DEFAULT_POSITION } from "chess.js";
+import { NEO_PIECES } from "@/components/chess/pieces";
 import { Chessboard } from "react-chessboard";
+import { colorName, isPlayerPly } from "@/lib/chess/player";
 import type { SavedGame } from "@/types/game";
 import {
-  downloadFile,
   getGameLocal,
   saveGameLocal,
   setActiveGame,
@@ -25,7 +27,9 @@ export function GameReview({ id }: { id: string }) {
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        setGame(getGameLocal(id));
+        const saved = getGameLocal(id);
+        if (saved?.result === "*") markGameAssisted(saved.id);
+        setGame(saved);
       } catch (e) {
         setError((e as Error).message);
       }
@@ -38,7 +42,7 @@ export function GameReview({ id }: { id: string }) {
       <div className="panel">
         <h1 className="text-xl">Game not found in this browser</h1>
         <p className="mt-3">
-          {error || "Import your backup on this device to reopen the game."}
+          {error || "Import the PGN on this device to reopen the game."}
         </p>
         <Link className="btn mt-4" href="/games">
           Open library
@@ -47,15 +51,21 @@ export function GameReview({ id }: { id: string }) {
     );
   const fen = ply ? game.moves[ply - 1].fenAfter : DEFAULT_POSITION;
   const selected = ply ? game.moves[ply - 1] : null;
-  const isWhiteMove = ply > 0 && ply % 2 === 1;
+  const isOwnMove = isPlayerPly(ply, game.playerColor);
   async function reviewMove() {
     if (!game || !selected || busy) return;
     setBusy(true);
     setError("");
     try {
+      if (game.result === "*") markGameAssisted(game.id);
       const beforeFen =
         ply > 1 ? game.moves[ply - 2].fenAfter : DEFAULT_POSITION;
-      const analyzed = await analyzeMove(beforeFen, selected, engine.analyze);
+      const analyzed = await analyzeMove(
+        beforeFen,
+        selected,
+        engine.analyze,
+        game.moves.slice(0, ply - 1).map((m) => m.uci),
+      );
       const latest = getGameLocal(game.id);
       if (latest?.updatedAt !== game.updatedAt)
         throw new Error(
@@ -72,15 +82,17 @@ export function GameReview({ id }: { id: string }) {
     }
   }
   return (
-    <section className="space-y-6">
+    <section className="review-page space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow">
-            Game replay · {game.result === "*" ? "In progress" : game.result}
+            Study · Game replay ·{" "}
+            {game.result === "*" ? "In progress" : game.result}
           </p>
-          <h1 className="mt-2 text-3xl font-semibold">Look again. See more.</h1>
+          <h1 className="mt-2 text-3xl font-semibold">Game review</h1>
           <p className="mt-2 text-sm text-zinc-400">
-            {game.openingName} · {new Date(game.createdAt).toLocaleDateString()}
+            You played {colorName(game.playerColor)} · {game.openingName} ·{" "}
+            {new Date(game.createdAt).toLocaleDateString()}
           </p>
         </div>
         <Link href="/games" className="btn secondary">
@@ -92,15 +104,19 @@ export function GameReview({ id }: { id: string }) {
           {error}
         </p>
       )}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)]">
         <div className="min-w-0 space-y-4">
-          <div className="panel max-w-[580px]">
+          <div className="review-board">
             <Chessboard
               options={{
+                pieces: NEO_PIECES,
+                darkSquareStyle: { backgroundColor: "#769656" },
+                lightSquareStyle: { backgroundColor: "#eeeed2" },
+                darkSquareNotationStyle: { color: "#eeeed2" },
+                lightSquareNotationStyle: { color: "#769656" },
                 position: fen,
+                boardOrientation: game.playerColor,
                 allowDragging: false,
-                darkSquareStyle: { backgroundColor: "#3f3f46" },
-                lightSquareStyle: { backgroundColor: "#d4d4d8" },
               }}
             />
             <p className="mt-4 text-center text-sm" aria-live="polite">
@@ -128,14 +144,14 @@ export function GameReview({ id }: { id: string }) {
             </div>
           </div>
           <div className="panel">
-            <h2 className="font-semibold">At this moment</h2>
+            <h2 className="font-semibold">Selected move</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-300">
-              {selected?.coachText ||
+              {(isOwnMove ? selected?.coachText : null) ||
                 (selected
-                  ? "This move has not been analyzed. Step through the game and choose a White move to review."
-                  : "Use Next or select a move to explore the game.")}
+                  ? "Select one of your moves to analyze the position."
+                  : "Select a move or use the replay controls.")}
             </p>
-            {isWhiteMove && (
+            {isOwnMove && (
               <button
                 className="btn mt-4"
                 disabled={busy || engine.status !== "ready"}
@@ -144,16 +160,26 @@ export function GameReview({ id }: { id: string }) {
                 {busy ? "Comparing positions…" : "Analyze this move"}
               </button>
             )}
+            {isOwnMove && (
+              <Link
+                className="btn secondary mt-3 ml-2"
+                href={`/learn?game=${game.id}&ply=${ply}`}
+              >
+                Retry this decision
+              </Link>
+            )}
             {engine.status === "error" && (
               <button className="btn secondary mt-3" onClick={engine.restart}>
                 Retry engine
               </button>
             )}
-            <p className="mt-3 text-xs leading-5 text-zinc-500">
-              Short Stockfish searches are estimates. “Near best” means an
-              estimated loss of at most 0.25 pawns. No strength or accuracy
-              score is inferred.
-            </p>
+            <details className="mt-4 text-xs leading-5 text-zinc-500">
+              <summary>About the analysis</summary>
+              <p>
+                Short Stockfish searches are estimates. “Near best” means a loss
+                estimate of at most 0.25 pawns.
+              </p>
+            </details>
           </div>
           <div className="flex flex-wrap gap-2">
             {game.result === "*" && (
@@ -165,44 +191,17 @@ export function GameReview({ id }: { id: string }) {
                 Resume game
               </Link>
             )}
-            <button
-              className="btn secondary"
-              onClick={() =>
-                downloadFile(
-                  `buddymine-${game.id}.pgn`,
-                  game.pgn,
-                  "application/x-chess-pgn",
-                )
-              }
-            >
-              Export PGN
-            </button>
-            <button
-              className="btn secondary"
-              onClick={() =>
-                downloadFile(
-                  `buddymine-${game.id}.json`,
-                  JSON.stringify({
-                    app: "BuddyMine",
-                    version: 1,
-                    games: [game],
-                  }),
-                )
-              }
-            >
-              Backup this game
-            </button>
           </div>
         </div>
         <div className="min-w-0 space-y-4">
           <div className="panel">
-            <h2 className="font-semibold">Move by move</h2>
+            <h2 className="font-semibold">Moves</h2>
             <div className="mt-4 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
               {game.moves.map((m, i) => (
                 <button
                   key={m.ply}
                   aria-pressed={ply === i + 1}
-                  className={`rounded-lg border px-3 py-2 text-sm ${ply === i + 1 ? "border-indigo-400 bg-indigo-500/20" : "border-zinc-700"}`}
+                  className={`rounded-lg border px-3 py-2 text-sm ${ply === i + 1 ? "border-emerald-400 bg-emerald-500/20" : "border-zinc-700"}`}
                   disabled={busy}
                   onClick={() => setPly(i + 1)}
                 >
@@ -216,9 +215,10 @@ export function GameReview({ id }: { id: string }) {
           <PhaseStrengthCard phaseStrength={game.summary.phaseStrength} />
         </div>
       </div>
-      <p className="text-xs text-zinc-500">
-        Position: <span className="break-all">{new Chess(fen).fen()}</span>
-      </p>
+      <details className="text-xs text-zinc-500">
+        <summary>Position FEN</summary>
+        <p className="mt-2 break-all">{new Chess(fen).fen()}</p>
+      </details>
     </section>
   );
 }

@@ -1,5 +1,10 @@
 import { Chess, DEFAULT_POSITION } from "chess.js";
-import type { SavedGame, ClassifiedMove, GameResult } from "@/types/game";
+import type {
+  SavedGame,
+  ClassifiedMove,
+  GameResult,
+  PlayerColor,
+} from "@/types/game";
 import { classifyMove } from "./classification";
 import { generateReview } from "./review-generator";
 
@@ -17,6 +22,7 @@ export function recordGame(
   base?: SavedGame,
   annotations: ClassifiedMove[] = [],
   result?: GameResult,
+  playerColor: PlayerColor = base?.playerColor ?? "white",
 ): SavedGame {
   const now = new Date().toISOString();
   const outcome = result ?? resultOf(chess);
@@ -25,31 +31,40 @@ export function recordGame(
     Event:
       headers.Event && headers.Event !== "?"
         ? headers.Event
-        : "BuddyMine practice",
-    White: headers.White && headers.White !== "?" ? headers.White : "Player",
+        : "Knightly practice",
+    White:
+      headers.White && headers.White !== "?"
+        ? headers.White
+        : playerColor === "white"
+          ? "Player"
+          : "Stockfish 18",
     Black:
-      headers.Black && headers.Black !== "?" ? headers.Black : "Stockfish 18",
+      headers.Black && headers.Black !== "?"
+        ? headers.Black
+        : playerColor === "black"
+          ? "Player"
+          : "Stockfish 18",
     Result: outcome,
   }))
     chess.setHeader(key, value);
-  const moves = chess
-    .history({ verbose: true })
-    .map((m, i) => ({
-      ...annotations[i],
-      ply: i + 1,
-      san: m.san,
-      uci: m.from + m.to + (m.promotion ?? ""),
-      fenAfter: m.after,
-      evalCp: annotations[i]?.evalCp ?? null,
-    }));
-  const summary = generateReview(moves, outcome);
+  const moves = chess.history({ verbose: true }).map((m, i) => ({
+    ...annotations[i],
+    ply: i + 1,
+    san: m.san,
+    uci: m.from + m.to + (m.promotion ?? ""),
+    fenAfter: m.after,
+    evalCp: annotations[i]?.evalCp ?? null,
+  }));
+  const summary = generateReview(moves, outcome, playerColor);
   return {
     id: base?.id ?? crypto.randomUUID(),
     clientId: base?.clientId ?? "local",
     createdAt: base?.createdAt ?? now,
     updatedAt: now,
-    playerColor: "white",
+    playerColor,
     engineLevel: base?.engineLevel ?? 7,
+    ...(base?.engineElo !== undefined ? { engineElo: base.engineElo } : {}),
+    ...(base?.training ? { training: { ...base.training } } : {}),
     result: outcome,
     openingName: summary.openingName,
     pgn: chess.pgn(),
@@ -58,7 +73,10 @@ export function recordGame(
     summary,
   };
 }
-export function importPgn(pgn: string): SavedGame {
+export function importPgn(
+  pgn: string,
+  playerColor: PlayerColor = "white",
+): SavedGame {
   if (pgn.length > 200000)
     throw new Error("PGN is too large. Import a single game under 200 KB.");
   const chess = new Chess();
@@ -77,7 +95,11 @@ export function importPgn(pgn: string): SavedGame {
   const result = ["1-0", "0-1", "1/2-1/2"].includes(declared)
     ? (declared as GameResult)
     : resultOf(chess);
-  return recordGame(chess, undefined, [], result);
+  for (const side of ["White", "Black"]) {
+    if (!chess.getHeaders()[side] || chess.getHeaders()[side] === "?")
+      chess.setHeader(side, `Unknown ${side}`);
+  }
+  return recordGame(chess, undefined, [], result, playerColor);
 }
 export function validateGame(value: unknown): SavedGame {
   if (!value || typeof value !== "object")
@@ -91,8 +113,18 @@ export function validateGame(value: unknown): SavedGame {
     !Number.isFinite(Date.parse(v.createdAt))
   )
     throw new Error("Invalid game metadata in backup.");
-  if (v.playerColor !== "white")
-    throw new Error("Only games played as White are supported.");
+  if (
+    v.playerColor !== undefined &&
+    v.playerColor !== "white" &&
+    v.playerColor !== "black"
+  )
+    throw new Error("Invalid player color in backup.");
+  if (
+    v.engineElo !== undefined &&
+    (!Number.isInteger(v.engineElo) || v.engineElo < 400 || v.engineElo > 3190)
+  )
+    throw new Error("Invalid opponent difficulty.");
+  if (v.training !== undefined && (v.training.origin !== "engine" || !Number.isInteger(v.training.initialElo) || v.training.initialElo < 400 || v.training.initialElo > 3190 || typeof v.training.changed !== "boolean" || (v.training.policy !== undefined && v.training.policy !== "maia3-5m-v1" && v.training.policy !== "maia3-5m-v2"))) throw new Error("Invalid training-game metadata.");
   if (!["*", "1-0", "0-1", "1/2-1/2"].includes(v.result))
     throw new Error("Invalid game result.");
   const chess = new Chess();
@@ -109,9 +141,11 @@ export function validateGame(value: unknown): SavedGame {
     const validAnalysis =
       a?.san === m.san &&
       a?.fenAfter === m.after &&
-      Number.isFinite(a.cpLoss) &&
-      a.cpLoss! >= 0 &&
-      a.cpLoss! <= 200000;
+      ((Number.isFinite(a.cpLoss) && a.cpLoss! >= 0 && a.cpLoss! <= 200000) ||
+        (Number.isInteger(a.mateIn) &&
+          Math.abs(a.mateIn!) <= 10000 &&
+          Number.isInteger(a.searchDepth) &&
+          a.searchDepth! >= 0));
     return {
       ply: i + 1,
       san: m.san,
@@ -121,7 +155,9 @@ export function validateGame(value: unknown): SavedGame {
       ...(validAnalysis
         ? {
             cpLoss: a.cpLoss,
-            classification: classifyMove(a.cpLoss!),
+            classification: Number.isFinite(a.cpLoss)
+              ? classifyMove(a.cpLoss!)
+              : undefined,
             coachText: String(a.coachText ?? "").slice(0, 1500),
             bestSan: String(a.bestSan ?? "").slice(0, 20),
             searchDepth: Number.isFinite(a.searchDepth)
@@ -142,6 +178,7 @@ export function validateGame(value: unknown): SavedGame {
     chess,
     {
       ...v,
+      playerColor: v.playerColor ?? "white",
       engineLevel: Number.isInteger(v.engineLevel)
         ? Math.max(1, Math.min(20, v.engineLevel))
         : 7,

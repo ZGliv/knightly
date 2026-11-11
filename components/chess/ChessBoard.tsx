@@ -8,15 +8,19 @@
 "use client";
 
 import { type CSSProperties, useMemo, useState } from "react";
+import { NEO_PIECES } from "./pieces";
 import { Chessboard } from "react-chessboard";
 
 interface ChessBoardProps {
   fen: string;
   playerColor: "white" | "black";
   activeColor: "white" | "black";
+  orientation?: "white" | "black";
   canInteract: boolean;
   isMoveLegal: (from: string, to: string) => boolean;
   getLegalTargets: (from: string) => string[];
+  suggestion?: string | null;
+  lastMove?: string;
   onMove: (from: string, to: string, promotion?: string) => Promise<boolean>;
 }
 
@@ -24,6 +28,9 @@ export function ChessBoard({
   fen,
   playerColor,
   activeColor,
+  orientation,
+  suggestion,
+  lastMove,
   canInteract,
   isMoveLegal,
   getLegalTargets,
@@ -35,11 +42,14 @@ export function ChessBoard({
 
   const squareStyles = useMemo(() => {
     const styles: Record<string, CSSProperties> = {};
+    if (lastMove)
+      for (const square of [lastMove.slice(0, 2), lastMove.slice(2, 4)])
+        styles[square] = { backgroundColor: "rgba(246,246,105,.65)" };
 
     // This styles the selected source square so the active piece is obvious.
     if (selectedSquare) {
       styles[selectedSquare] = {
-        boxShadow: "inset 0 0 0 3px rgba(99, 102, 241, 0.9)",
+        boxShadow: "inset 0 0 0 3px rgba(237, 205, 91, 0.95)",
       };
     }
 
@@ -52,17 +62,27 @@ export function ChessBoard({
     }
 
     return styles;
-  }, [selectedSquare, highlightedTargets]);
+  }, [selectedSquare, highlightedTargets, lastMove]);
 
   return (
-    <div className="w-full max-w-[580px] rounded-xl border border-zinc-800 bg-zinc-900 p-3 shadow-2xl">
-      <p className="mb-3 text-xs text-zinc-400">
-        Tap a piece, then a highlighted square. Or drag a piece.
-      </p>
+    <div className="chessboard-frame">
       {/* This provides an MVP-friendly board with custom dark-square contrast. */}
       <Chessboard
         options={{
           position: fen,
+          pieces: NEO_PIECES,
+          arrows: suggestion
+            ? [
+                {
+                  startSquare: suggestion.slice(0, 2),
+                  endSquare: suggestion.slice(2, 4),
+                  color: "rgba(235,154,45,.85)",
+                },
+              ]
+            : [],
+          darkSquareNotationStyle: { color: "#eeeed2", fontWeight: 600 },
+          lightSquareNotationStyle: { color: "#769656", fontWeight: 600 },
+          boardOrientation: orientation ?? playerColor,
           onPieceDrop: ({ sourceSquare, targetSquare }) => {
             if (!canInteract) return false;
             if (!targetSquare) return false;
@@ -123,28 +143,32 @@ export function ChessBoard({
             return pieceColor === playerColor && activeColor === playerColor;
           },
           squareStyles,
-          darkSquareStyle: { backgroundColor: "#3f3f46" },
-          lightSquareStyle: { backgroundColor: "#d4d4d8" },
-          boardStyle: { borderRadius: "10px" },
+          darkSquareStyle: { backgroundColor: "var(--board-dark)" },
+          lightSquareStyle: { backgroundColor: "var(--board-light)" },
+          boardStyle: { borderRadius: "3px" },
           allowDragging: canInteract,
           animationDurationInMs: 180,
         }}
       />
       {canInteract && (
-        <label className="mt-3 flex items-center justify-between gap-2 text-xs text-zinc-400">
-          Promote pawns to
-          <select
-            aria-label="Promotion piece"
-            value={promotion}
-            onChange={(e) => setPromotion(e.target.value)}
-            className="rounded border border-zinc-700 bg-zinc-950 p-2 text-zinc-100"
-          >
-            <option value="q">Queen</option>
-            <option value="r">Rook</option>
-            <option value="b">Bishop</option>
-            <option value="n">Knight</option>
-          </select>
-        </label>
+        <details className="board-options">
+          <summary>Board controls</summary>
+          <p>Tap a piece and a destination, or drag it.</p>
+          <label>
+            Promote pawns to
+            <select
+              aria-label="Promotion piece"
+              value={promotion}
+              onChange={(e) => setPromotion(e.target.value)}
+              className="rounded border border-zinc-700 bg-zinc-950 p-2 text-zinc-100"
+            >
+              <option value="q">Queen</option>
+              <option value="r">Rook</option>
+              <option value="b">Bishop</option>
+              <option value="n">Knight</option>
+            </select>
+          </label>
+        </details>
       )}
     </div>
   );

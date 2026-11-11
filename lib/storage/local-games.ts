@@ -17,7 +17,7 @@ export function listGamesLocal(): SavedGame[] {
       );
   } catch {
     throw new Error(
-      "Your saved library could not be read. It has not been overwritten. Download the raw backup from Games before restoring an earlier backup.",
+      "Your saved library could not be read. It has not been overwritten. Open Your games to restore the previous browser snapshot if one is available.",
     );
   }
 }
@@ -29,7 +29,7 @@ export function saveGameLocal(game: SavedGame) {
 function writeGames(games: SavedGame[]) {
   if (games.length > 1000)
     throw new Error(
-      "Library limit reached (1,000 games). Export a backup before removing games.",
+      "Library limit reached (1,000 games). Your existing games are preserved.",
     );
   const previous = localStorage.getItem(GAMES_KEY);
   try {
@@ -37,7 +37,7 @@ function writeGames(games: SavedGame[]) {
     localStorage.setItem(GAMES_KEY, JSON.stringify(games));
   } catch {
     throw new Error(
-      "This browser could not save the game (storage is full or blocked). Keep this page open and download a backup or PGN.",
+      "This browser could not save the game (storage is full or blocked). Keep this page open; the current position remains here until you reload.",
     );
   }
 }
@@ -70,7 +70,7 @@ export function restorePrevious() {
   const raw = localStorage.getItem(BACKUP_KEY);
   if (!raw)
     throw new Error(
-      "No previous browser snapshot is available. Import a downloaded backup instead.",
+      "No previous browser snapshot is available. The unreadable library has been preserved.",
     );
   const games: unknown = JSON.parse(raw);
   if (!Array.isArray(games)) throw new Error("Previous snapshot is invalid.");
@@ -90,7 +90,7 @@ export function importGames(raw: string) {
       ? parsed.games
       : null;
   if (!Array.isArray(values) || !values.length || values.length > 1000)
-    throw new Error("Choose a BuddyMine backup with 1–1,000 games.");
+    throw new Error("Choose a Knightly or legacy BuddyMine backup with 1–1,000 games.");
   const incoming = values.map(validateGame);
   const existing = listGamesLocal();
   const merged = new Map(existing.map((g) => [g.id, g]));

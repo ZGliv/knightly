@@ -9,6 +9,7 @@ const eslintConfig = defineConfig([
   globalIgnores([
     "public/engine/**",
     "output/**",
+    ".vercel/**",
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",

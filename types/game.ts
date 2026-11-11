@@ -44,6 +44,8 @@ export interface SavedGame {
   updatedAt?: string;
   playerColor: PlayerColor;
   engineLevel: number;
+  engineElo?: number;
+  training?: { origin: "engine"; initialElo: number; changed: boolean; policy?: "maia3-5m-v1" | "maia3-5m-v2" };
   result: GameResult;
   openingName: string;
   pgn: string;

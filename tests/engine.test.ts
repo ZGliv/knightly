@@ -5,7 +5,7 @@ class FakeWorker {
   static last: FakeWorker;
   messages: string[] = [];
   ended = false;
-  onmessage: ((e: { data: string }) => void) | null = null;
+  onmessage: ((e: { data: string | Record<string, unknown> }) => void) | null = null;
   onerror: (() => void) | null = null;
   onmessageerror: (() => void) | null = null;
   constructor(public url: string) {
@@ -17,7 +17,7 @@ class FakeWorker {
   terminate() {
     this.ended = true;
   }
-  emit(message: string) {
+  emit(message: string | Record<string, unknown>) {
     this.onmessage?.({ data: message });
   }
 }
@@ -102,4 +102,57 @@ test("termination rejects pending search instead of applying a stale reply", asy
   engine.terminate();
   worker.emit("bestmove e2e4");
   await assertion;
+});
+
+test("coach requests retain the complete UCI move history for repetition", async () => {
+  const { engine, worker } = await ready();
+  const p = engine.analyzePosition("ignored-fen", 20, [
+    "g1f3",
+    "g8f6",
+    "f3g1",
+    "f6g8",
+  ]);
+  await Promise.resolve();
+  assert(
+    worker.messages.includes("position startpos moves g1f3 g8f6 f3g1 f6g8"),
+  );
+  assert(!worker.messages.includes("position fen ignored-fen"));
+  worker.emit("info depth 12 score cp 0 pv e2e4");
+  worker.emit("bestmove e2e4");
+  await p;
+  engine.terminate();
+});
+
+test("every opponent target uses Maia while queued analysis uses full-strength Stockfish", async () => {
+  for (const elo of [400,800,1200,1400,1600,1800,2000,2200,2400,3190]) {
+    const {engine,worker}=await ready();
+    const opponent=engine.analyzePosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",{elo});
+    await Promise.resolve();
+    const human=FakeWorker.last;
+    assert.equal(human.url,"/engine/maia/worker.mjs");
+    assert(!worker.messages.some(m=>m.startsWith("go ")));
+    human.emit({id:1,move:"e2e4"});await opponent;
+    const coach=engine.analyzePosition("analysis",20);await Promise.resolve();
+    assert(worker.messages.includes("setoption name Skill Level value 20"));
+    assert(!worker.messages.some(m=>m.includes("UCI_LimitStrength value true")));
+    worker.emit("info depth 12 score cp 30 pv d2d4");worker.emit("bestmove d2d4");
+    assert.equal((await coach).scoreCp,30);engine.terminate();
+  }
+});
+
+test("human opponent uses a separate worker and cannot contaminate coach evaluation", async () => {
+  const {engine,worker} = await ready();
+  const reply = engine.analyzePosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", {elo:800});
+  await Promise.resolve();
+  const human = FakeWorker.last;
+  assert.equal(human.url,"/engine/maia/worker.mjs");
+  assert(!worker.messages.some(message=>message.startsWith("go ")));
+  human.emit({id:1,move:"e2e4"});
+  assert.deepEqual(await reply,{bestMove:"e2e4",scoreCp:null,mateIn:null,depth:0,pv:["e2e4"]});
+  const coach = engine.analyzePosition("test-fen",20);
+  await Promise.resolve();
+  worker.emit("info depth 14 score cp 25 pv d2d4 d7d5");
+  worker.emit("bestmove d2d4");
+  assert.equal((await coach).scoreCp,25);
+  engine.terminate(); assert(human.ended);
 });

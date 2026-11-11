@@ -1,0 +1,40 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions -- Playwright CLI continuation of the isolated both-colors QA session. */
+async (page) => {
+  const base = "http://localhost:3038";
+  const check = (v, message) => { if (!v) throw Error(message); };
+  const library = () => page.evaluate(() => JSON.parse(localStorage.getItem("buddymine_games_v1")));
+  const original = (await library()).find((g) => g.pgn.includes("Black retry QA"));
+  const originalCoach = await page.evaluate(() => localStorage.getItem("buddymine_game_coach_v1"));
+  await page.goto(base + "/games");
+  await page.getByLabel(`Your side for ${original.id}`).selectOption("white");
+  await page.getByText("Player side updated to White. Coaching will recheck the matching decisions.", { exact: true }).waitFor();
+  const changed = (await library()).find((g) => g.id === original.id);
+  check(changed.playerColor === "white" && changed.pgn === original.pgn && changed.fenFinal === original.fenFinal, "Side correction altered game record");
+  await page.goto(base + `/learn?game=${original.id}&ply=4`);
+  await page.getByRole("button", { name: "Scan 3 decisions", exact: true }).waitFor();
+  check(await page.getByRole("heading", { name: "You played Nf6. Look again.", exact: true }).count() === 0, "Stale Black source accepted after side correction");
+  check(await page.getByRole("heading", { name: "What happened when you tried?", exact: true }).count() === 0, "Black attempts counted as White practice");
+  check(await page.evaluate(() => localStorage.getItem("buddymine_game_coach_v1")) === originalCoach, "Changing scope destroyed coach history");
+  await page.goto(base + "/games"); await page.getByLabel(`Your side for ${original.id}`).selectOption("black");
+  await page.getByText("Player side updated to Black. Coaching will recheck the matching decisions.", { exact: true }).waitFor();
+  await page.reload(); check((await library()).find((g) => g.id === original.id).playerColor === "black", "Corrected side failed reload");
+  await page.goto(base + `/learn?game=${original.id}&ply=4`); await page.getByLabel("Your retry move").waitFor({ timeout: 30000 });
+  await page.getByRole("heading", { name: "What happened when you tried?", exact: true }).waitFor();
+  const initialAttempts = await page.evaluate(() => JSON.parse(localStorage.getItem("buddymine_game_coach_v1")).attempts.length);
+  await page.locator('[data-square="g8"]').click(); await page.locator('[data-square="f6"]').click();
+  await page.getByText(/The board is reset so you can try another move/).waitFor({ timeout: 30000 });
+  await page.locator('[data-square="d8"]').click(); await page.locator('[data-square="h4"]').click();
+  await page.getByRole("heading", { name: "What changes on the board?", exact: true }).waitFor();
+  const attempts = await page.evaluate(() => JSON.parse(localStorage.getItem("buddymine_game_coach_v1")).attempts);
+  check(attempts.length === initialAttempts + 2 && attempts.at(-1).triedUci === "d8h4" && attempts.at(-1).outcome === "supported", "Black tap board retry failed");
+  await page.setViewportSize({ width: 375, height: 812 }); await page.waitForTimeout(400);
+  await page.screenshot({ path: "output/portfolio-upgrade-oct23-round3/black-feedback-mobile.png", fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1100 }); await page.waitForTimeout(400);
+  await page.screenshot({ path: "output/portfolio-upgrade-oct23-round3/black-feedback-desktop.png", fullPage: true });
+  await page.goto(base + `/learn?game=${original.id}&ply=4`); await page.getByLabel("Your retry move").waitFor({ timeout: 30000 });
+  await page.screenshot({ path: "output/portfolio-upgrade-oct23-round3/black-retry-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 375, height: 812 }); await page.waitForTimeout(400);
+  await page.screenshot({ path: "output/portfolio-upgrade-oct23-round3/black-retry-mobile.png", fullPage: true });
+  const result = { checks: "Explicit library side correction preserves PGN/FEN; old-color source and attempts excluded; old coach data retained; corrected side survives reload; restoring side restores owned evidence; Black piece-tap legal move/retry/mate flow", gameId: original.id, passed: true };
+  await page.evaluate((r) => { window.__colorCorrectionQA = r; }, result); return result;
+}

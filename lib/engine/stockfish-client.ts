@@ -1,3 +1,8 @@
+import { MaiaClient, type HumanStatus } from "./maia-client";
+import {
+  strengthCommands,
+  type EngineStrength,
+} from "./strength";
 export interface EngineAnalysis {
   bestMove: string;
   scoreCp: number | null;
@@ -8,7 +13,8 @@ export interface EngineAnalysis {
 
 type Request = {
   fen: string;
-  skill: number;
+  skill: EngineStrength;
+  history?: string[];
   resolve: (a: EngineAnalysis) => void;
   reject: (e: Error) => void;
 };
@@ -31,7 +37,9 @@ export class StockfishClient {
   private readyResolve!: () => void;
   private readyReject!: (e: Error) => void;
 
-  constructor() {
+  private human: MaiaClient | null = null;
+
+  constructor(private onHumanStatus: (status: HumanStatus) => void = () => {}) {
     this.ready = new Promise((resolve, reject) => {
       this.readyResolve = resolve;
       this.readyReject = reject;
@@ -62,11 +70,19 @@ export class StockfishClient {
   init() {
     return this.ready;
   }
-  async analyzePosition(fen: string, skill = 20): Promise<EngineAnalysis> {
+  async analyzePosition(
+    fen: string,
+    skill: EngineStrength = 20,
+    history?: string[],
+  ): Promise<EngineAnalysis> {
     await this.ready;
     if (this.failure) throw this.failure;
+    if (typeof skill === "object") {
+      this.human ??= new MaiaClient(this.onHumanStatus);
+      return this.human.analyzePosition(fen, skill.elo, history);
+    }
     return new Promise((resolve, reject) => {
-      this.pending.push({ fen, skill, resolve, reject });
+      this.pending.push({ fen, skill, history, resolve, reject });
       this.next();
     });
   }
@@ -80,10 +96,16 @@ export class StockfishClient {
       depth: 0,
       pv: [],
     };
+    for (const command of strengthCommands(this.active.skill))
+      this.worker.postMessage(command);
     this.worker.postMessage(
-      `setoption name Skill Level value ${Math.max(0, Math.min(20, this.active.skill))}`,
+      this.active.history
+        ? "position startpos" +
+            (this.active.history.length
+              ? " moves " + this.active.history.join(" ")
+              : "")
+        : "position fen " + this.active.fen,
     );
-    this.worker.postMessage("position fen " + this.active.fen);
     // The same fixed search budget is used for both sides of a move comparison.
     this.worker.postMessage("go movetime 500");
     this.timer = setTimeout(
@@ -127,7 +149,8 @@ export class StockfishClient {
       clearTimeout(this.timer);
       const request = this.active;
       this.active = null;
-      request.resolve({ ...this.result, bestMove: line.split(" ")[1] });
+      const bestMove = line.split(" ")[1];
+      request.resolve({ ...this.result, bestMove });
       this.next();
     }
   }
@@ -140,6 +163,7 @@ export class StockfishClient {
     this.active = null;
     this.pending.splice(0).forEach((request) => request.reject(error));
     this.worker.terminate();
+    this.human?.terminate();
   }
   terminate() {
     this.fail(new Error("Engine session ended."));

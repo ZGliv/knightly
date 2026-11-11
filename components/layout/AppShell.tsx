@@ -1,59 +1,131 @@
-/*
- * File: components/layout/AppShell.tsx
- * Description: Wraps pages in a consistent dark UI shell with a lightweight app header.
- * Functions:
- * - AppShell: Provides shared page container and title bar.
- */
-
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
+import {
+  IconBook2,
+  IconRoute,
+  IconChess,
+  IconMoon,
+  IconSun,
+  IconArchive,
+} from "@tabler/icons-react";
 
-interface AppShellProps {
-  children: ReactNode;
-}
-
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children }: { children: ReactNode }) {
+  const path = usePathname();
+  const playing = ["/", "/play"].includes(path);
+  const learning = path.startsWith("/learn");
+  const studying = path.startsWith("/study");
+  const roadmap = path === "/learn";
+  const lesson = path === "/learn/foundations";
+  const [dark, setDark] = useState(true);
+  useEffect(() => {
+    let next = true;
+    try {
+      next = localStorage.getItem("knightly_theme_v1") !== "light";
+    } catch {}
+    document.documentElement.dataset.theme = next ? "dark" : "light";
+    queueMicrotask(() => {
+      setDark(next);
+    });
+  }, []);
+  function toggleTheme() {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.dataset.theme = next ? "dark" : "light";
+    try {
+      localStorage.setItem("knightly_theme_v1", next ? "dark" : "light");
+    } catch {}
+  }
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <Link href="/" className="text-base font-semibold text-indigo-300">
-            BuddyMine Chess Coach
+    <div className={`app-shell ${playing ? "play-shell" : ""} ${roadmap || lesson ? "roadmap-shell" : ""}`}>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <header className="app-header">
+        <div className="header-inner">
+          <Link href="/play" className="brand">
+            <Image
+              src="/brand/knightly.svg"
+              alt=""
+              width={32}
+              height={32}
+              unoptimized
+            />
+            <span>Knightly</span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm text-zinc-300">
-            <Link className="hover:text-zinc-100" href="/play">
-              Play
+          <nav aria-label="Primary" className="primary-nav">
+            <Link href="/play" aria-current={playing ? "page" : undefined}>
+              <IconChess size={19} stroke={1.7} />
+              <span>Play</span>
             </Link>
-            <Link className="hover:text-zinc-100" href="/games">
-              Games
+            <Link href="/learn" aria-current={learning ? "page" : undefined}>
+              <IconRoute size={19} stroke={1.7} /><span>Learn</span>
+            </Link>
+            <Link href="/study" aria-current={studying ? "page" : undefined}>
+              <IconBook2 size={19} stroke={1.7} />
+              <span>Study</span>
+            </Link>
+          </nav>
+          <div className="header-tools">
+            <Link
+              href="/games"
+              className="icon-button"
+              aria-label="Your saved games"
+            >
+              <IconArchive size={20} stroke={1.7} />
+            </Link>
+            <button
+              className="icon-button"
+              onClick={toggleTheme}
+              aria-label={dark ? "Use light theme" : "Use dark theme"}
+            >
+              {dark ? (
+                <IconSun size={20} stroke={1.7} />
+              ) : (
+                <IconMoon size={20} stroke={1.7} />
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+      {!playing && !roadmap && !lesson && !studying && (
+        <div className="study-nav-wrap">
+          <nav className="study-nav" aria-label="Study sections">
+            <Link
+              href="/study"
+              aria-current={path.startsWith("/study") ? "page" : undefined}
+            >
+              Library
+            </Link>
+            <Link
+              href="/learn/games"
+              aria-current={path === "/learn/games" ? "page" : undefined}
+            >
+              Game practice
+            </Link>
+            <Link
+              href="/games"
+              aria-current={
+                path === "/games" || path.startsWith("/review")
+                  ? "page"
+                  : undefined
+              }
+            >
+              Your games
             </Link>
           </nav>
         </div>
-      </header>
+      )}
+      <main
+        id="main-content"
+        className={`workspace ${path === "/play" ? "play-workspace" : roadmap ? "roadmap-workspace" : lesson ? "lesson-workspace" : ""}`}
+      >
+        {children}
+      </main>
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-6">{children}</main>
-      <footer className="mx-auto w-full max-w-7xl px-4 py-8 text-xs leading-6 text-zinc-500">
-        Stockfish 18 lite, GPL v3.{" "}
-        <a className="underline" href="/engine/COPYING.txt">
-          License
-        </a>{" "}
-        ·{" "}
-        <a
-          className="underline"
-          href="https://github.com/nmrugg/stockfish.js/tree/082eeba46b0c5f8f8065e5386750aa0ecfa2062c"
-        >
-          Corresponding source &amp; build instructions
-        </a>{" "}
-        ·{" "}
-        <a
-          className="underline"
-          href="https://github.com/nmrugg/stockfish.js/archive/082eeba46b0c5f8f8065e5386750aa0ecfa2062c.tar.gz"
-        >
-          Download engine source
-        </a>
-      </footer>
     </div>
   );
 }

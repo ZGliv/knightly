@@ -1,13 +1,15 @@
-import type { ClassifiedMove, GameResult, GameSummary } from "@/types/game";
+import type { ClassifiedMove, GameResult, GameSummary, PlayerColor } from "@/types/game";
 import { getPhaseForPly, type GamePhase } from "@/lib/utils/phase";
+import { isPlayerPly, moveLabel } from "./player";
 import { detectOpening } from "./opening-detection";
 
 export function generateReview(
   moves: ClassifiedMove[],
   result: GameResult,
+  playerColor: PlayerColor = "white",
 ): GameSummary {
   const analyzed = moves.filter(
-    (m) => m.classification && typeof m.cpLoss === "number",
+    (m) => isPlayerPly(m.ply, playerColor) && m.classification && typeof m.cpLoss === "number",
   );
   const phases: Record<GamePhase, ClassifiedMove[]> = {
     opening: [],
@@ -52,7 +54,7 @@ export function generateReview(
           .slice(0, 2)
           .map(
             (m) =>
-              `Return to move ${Math.ceil(m.ply / 2)} (${m.san}). Compare ${m.bestSan || "the suggested move"} with your choice; look for checks, captures and threats for both sides.`,
+              `Return to move ${moveLabel(m.ply)} (${m.san}). Compare ${m.bestSan || "the suggested move"} with your choice; look for checks, captures and threats for both sides.`,
           )
       : [
           analyzed.length

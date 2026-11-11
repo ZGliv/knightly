@@ -1,75 +1,92 @@
-/*
- * File: components/chess/MoveList.tsx
- * Description: Shows chronological SAN moves with optional quality tags for analyzed player moves.
- * Functions:
- * - MoveList: Renders move pairs and quality labels.
- */
-
 "use client";
-
+import { useEffect, useRef } from "react";
 import type { ClassifiedMove } from "@/types/game";
-
-interface MoveListProps {
+import { moveLabel } from "@/lib/chess/player";
+export function MoveList({
+  moves,
+  selectedPly,
+  onSelect,
+  showGrades = false,
+}: {
   moves: ClassifiedMove[];
-}
-
-function badgeClass(label?: string) {
-  if (label === "best") return "bg-emerald-600/30 text-emerald-200";
-  if (label === "good") return "bg-green-600/20 text-green-200";
-  if (label === "inaccuracy") return "bg-yellow-600/30 text-yellow-200";
-  if (label === "mistake") return "bg-orange-600/30 text-orange-200";
-  if (label === "blunder") return "bg-red-600/35 text-red-200";
-  return "bg-zinc-700 text-zinc-200";
-}
-
-export function MoveList({ moves }: MoveListProps) {
+  selectedPly: number;
+  onSelect: (ply: number) => void;
+  showGrades?: boolean;
+}) {
+  const scroll = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = scroll.current;
+    if (!container) return;
+    function revealSelected() {
+      const active = container!.querySelector<HTMLElement>('[aria-pressed="true"]');
+      if (!active) return;
+      const row = active.parentElement!;
+      const horizontal = getComputedStyle(container!).display === "flex";
+      const viewport = container!.getBoundingClientRect();
+      const bounds = row.getBoundingClientRect();
+      if (horizontal) {
+        if (bounds.left < viewport.left) container!.scrollLeft += bounds.left - viewport.left;
+        else if (bounds.right > viewport.right) container!.scrollLeft += bounds.right - viewport.right;
+      } else {
+        if (bounds.top < viewport.top) container!.scrollTop += bounds.top - viewport.top;
+        else if (bounds.bottom > viewport.bottom) container!.scrollTop += bounds.bottom - viewport.bottom;
+      }
+    }
+    revealSelected();
+    const observer = new ResizeObserver(revealSelected);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [selectedPly, moves.length]);
   const rows = [];
-  for (let index = 0; index < moves.length; index += 2) {
-    const white = moves[index];
-    const black = moves[index + 1];
-    rows.push({ moveNumber: Math.floor(index / 2) + 1, white, black });
-  }
-
+  for (let i = 0; i < moves.length; i += 2)
+    rows.push({ number: i / 2 + 1, white: moves[i], black: moves[i + 1] });
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-300">
-        Move List
-      </h3>
-      <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1 text-sm">
-        {rows.length === 0 ? (
-          <p className="text-zinc-500">No moves yet.</p>
-        ) : (
-          rows.map((row) => (
-            <div
-              key={`row-${row.moveNumber}`}
-              className="grid grid-cols-[40px_1fr_1fr] items-center gap-2"
-            >
-              <span className="text-zinc-500">{row.moveNumber}.</span>
-              <div className="flex flex-wrap items-center gap-2 rounded-md bg-zinc-800 px-2 py-1">
-                <span className="font-medium text-zinc-100">
-                  {row.white.san}
-                </span>
-                {row.white.classification ? (
-                  <span
-                    className={`rounded px-1.5 py-0.5 text-xs ${badgeClass(
-                      row.white.classification,
-                    )}`}
-                  >
-                    {row.white.classification === "best"
-                      ? "near best"
-                      : row.white.classification}
-                  </span>
-                ) : null}
-              </div>
-              <div className="rounded-md bg-zinc-800 px-2 py-1">
-                <span className="font-medium text-zinc-100">
-                  {row.black?.san ?? "-"}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
+    <div className="move-list">
+      <div className="move-list-labels">
+        <span />
+        <span>White</span>
+        <span>Black</span>
       </div>
+      {!rows.length ? (
+        <div className="move-list-empty">
+          <p>No moves yet</p>
+          <span>Tap a piece, then a square.</span>
+        </div>
+      ) : (
+        <div className="move-list-scroll" ref={scroll}>
+          {rows.map((row) => (
+            <div className="move-row" key={row.number}>
+              <span>{row.number}.</span>
+              {[row.white, row.black].map((move, index) =>
+                move ? (
+                  <button
+                    key={index}
+                    aria-label={`${moveLabel(move.ply)} ${move.san}`}
+                    aria-pressed={selectedPly === move.ply}
+                    onClick={() => onSelect(move.ply)}
+                  >
+                    <strong>{move.san}</strong>
+                    {showGrades &&
+                      move.classification &&
+                      ["inaccuracy", "mistake", "blunder"].includes(
+                        move.classification,
+                      ) && (
+                        <span
+                          className={`move-grade grade-${move.classification}`}
+                          title={move.classification}
+                        >
+                          {move.classification === "blunder" ? "??" : "?!"}
+                        </span>
+                      )}
+                  </button>
+                ) : (
+                  <span key={index} />
+                ),
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
