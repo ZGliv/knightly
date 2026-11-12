@@ -1,0 +1,393 @@
+/* "Play like the pros". Colours come only from the theme variables in app/globals.css. */
+
+.masters-page,
+.masters-play {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.masters-muted {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.masters-error {
+  color: var(--warning);
+  font-size: 13px;
+  margin: 0;
+}
+
+.masters-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.masters-link:hover {
+  color: var(--accent-hover);
+}
+
+.masters-button {
+  appearance: none;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.masters-button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.masters-button.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+.masters-button.ghost:hover {
+  background: var(--surface-2);
+}
+.masters-button.small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.masters-button:focus-visible,
+.masters-link:focus-visible,
+.masters-card:focus-visible,
+.masters-filter button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Landing */
+
+.masters-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.masters-filter button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.masters-filter button span {
+  color: var(--quiet);
+  margin-left: 4px;
+}
+.masters-filter button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.masters-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.masters-group-head h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+.masters-group-head h2 span {
+  color: var(--quiet);
+  font-weight: 500;
+  font-size: 14px;
+  margin-left: 4px;
+}
+.masters-group-head > p {
+  color: var(--muted);
+  margin: 0;
+  max-width: 70ch;
+}
+.masters-group-head details {
+  margin-top: 8px;
+  max-width: 75ch;
+}
+.masters-group-head summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+}
+.masters-group-head dl {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+.masters-group-head dt {
+  font-weight: 600;
+  font-size: 13px;
+}
+.masters-group-head dd {
+  margin: 2px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.masters-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+.masters-card {
+  appearance: none;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.masters-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.masters-card-players {
+  font-weight: 650;
+  font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.masters-card-players em {
+  font-style: normal;
+  color: var(--quiet);
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.masters-card-meta,
+.masters-card-opening {
+  color: var(--muted);
+  font-size: 13px;
+}
+.masters-card-opening {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.masters-card-foot {
+  margin-top: auto;
+  padding-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--quiet);
+}
+.masters-card-best {
+  color: var(--accent);
+  font-weight: 600;
+}
+.masters-source {
+  font-size: 12px;
+}
+
+/* Playing a game */
+
+.masters-play-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.masters-play-top .masters-link {
+  align-self: flex-start;
+}
+.masters-play-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.masters-play-title strong {
+  font-size: 18px;
+}
+.masters-play-title span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.masters-play-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@media (min-width: 900px) {
+  .masters-play-grid {
+    grid-template-columns: minmax(0, 560px) minmax(280px, 1fr);
+    align-items: start;
+  }
+}
+.masters-board {
+  min-width: 0;
+}
+
+.masters-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.masters-score {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.masters-score > div {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.masters-score-label {
+  font-size: 12px;
+  color: var(--quiet);
+}
+.masters-score strong {
+  font-size: 20px;
+}
+.masters-score small {
+  font-size: 13px;
+  color: var(--quiet);
+  font-weight: 500;
+}
+.masters-status {
+  margin: 0;
+  font-weight: 600;
+}
+
+.masters-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  background: var(--surface);
+}
+.masters-feedback p {
+  margin: 0;
+  line-height: 1.5;
+}
+.masters-feedback.good {
+  border-left-color: var(--accent);
+}
+.masters-feedback.ok {
+  border-left-color: var(--quiet);
+}
+.masters-feedback.bad {
+  border-left-color: var(--warning);
+}
+.masters-verdict {
+  font-weight: 700;
+}
+.masters-feedback.good .masters-verdict {
+  color: var(--accent);
+}
+.masters-feedback.bad .masters-verdict {
+  color: var(--warning);
+}
+.masters-line {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.masters-line span {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  color: var(--quiet);
+  margin-right: 4px;
+}
+.masters-coach {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.masters-summary {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.masters-summary h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.masters-summary-score {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.masters-summary-score span {
+  color: var(--muted);
+  font-weight: 500;
+}
+.masters-summary dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.masters-summary dl div {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+.masters-summary dt {
+  font-size: 11px;
+  color: var(--quiet);
+}
+.masters-summary dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.masters-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.masters-scoring {
+  font-size: 12px;
+}
