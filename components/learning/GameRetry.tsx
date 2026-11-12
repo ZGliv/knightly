@@ -29,6 +29,8 @@ type Props = {
   onAttempt: (value: RetryAttempt) => void;
   onBusy: (busy: boolean) => void;
   onNext: () => void;
+  /** For games imported from another site: links there instead of the in-app review. */
+  importedFrom?: { site: string; url: string };
 };
 export function GameRetry({
   source,
@@ -37,6 +39,7 @@ export function GameRetry({
   onAttempt,
   onBusy,
   onNext,
+  importedFrom,
 }: Props) {
   const engine = useEngine();
   const [analysis, setAnalysis] = useState<DecisionAnalysis | null>(null);
@@ -50,6 +53,8 @@ export function GameRetry({
   const [reply, setReply] = useState<string[]>([]);
   const [done, setDone] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  // Keyed per decision, so this only says whether this visit saved an attempt.
+  const [recorded, setRecorded] = useState(false);
   const [boardVersion, setBoardVersion] = useState(0);
   const [lineIndex, setLineIndex] = useState(-1);
   const [view, setView] = useState<"retry" | "original" | "better">("retry");
@@ -126,6 +131,7 @@ export function GameRetry({
     usedHints = hints,
     usedMisses = misses,
   ) {
+    setRecorded(true);
     onAttempt({
       id: crypto.randomUUID(),
       decisionId: source.id,
@@ -396,14 +402,18 @@ export function GameRetry({
           </p>
           <Link
             className="inline-block text-sm text-emerald-300 underline"
-            href={`/learn/foundations?lesson=${teachingForAnalysis(analysis).lesson}&color=${source.playerColor}&game=${encodeURIComponent(source.gameId)}`}
+            // An imported game is not in the saved-game library, so the lesson cannot lead back to it.
+            href={`/learn/foundations?lesson=${teachingForAnalysis(analysis).lesson}&color=${source.playerColor}${importedFrom ? "" : `&game=${encodeURIComponent(source.gameId)}`}`}
           >
             Study this idea
           </Link>
-          <p className="text-xs leading-5 text-zinc-400">
-            Attempt saved. Revisit in 15 minutes with support, or at least a day
-            after an independent solve.
-          </p>
+          {recorded && (
+            <p className="text-xs leading-5 text-zinc-400">
+              {importedFrom
+                ? "Attempt recorded."
+                : "Attempt saved. Revisit in 15 minutes with support, or at least a day after an independent solve."}
+            </p>
+          )}
           <div className="space-y-3 text-sm leading-6">
             <p>
               <strong>Your game: {source.playedSan}.</strong>{" "}
@@ -491,17 +501,28 @@ export function GameRetry({
         <p className="mt-2">
           {source.opening} · {new Date(source.date).toLocaleDateString()} · move{" "}
           {moveLabel(source.ply)} as {colorName(source.playerColor)} from your
-          saved game.
+          {importedFrom ? ` game on ${importedFrom.site}.` : " saved game."}
         </p>
         <p className="mt-2 break-all">
           Before-move position: {source.fenBefore}
         </p>
-        <Link
-          className="mt-2 inline-block underline"
-          href={`/review/${source.gameId}`}
-        >
-          Open the original game
-        </Link>
+        {importedFrom ? (
+          <a
+            className="mt-2 inline-block underline"
+            href={importedFrom.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open the original game on {importedFrom.site}
+          </a>
+        ) : (
+          <Link
+            className="mt-2 inline-block underline"
+            href={`/review/${source.gameId}`}
+          >
+            Open the original game
+          </Link>
+        )}
       </details>
     </section>
   );

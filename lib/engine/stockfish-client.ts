@@ -11,13 +11,32 @@ export interface EngineAnalysis {
   pv: string[];
 }
 
+/** A fixed node budget makes a search give the same result on every device. */
+export interface SearchLimit {
+  nodes: number;
+}
+
 type Request = {
   fen: string;
   skill: EngineStrength;
   history?: string[];
+  limit?: SearchLimit;
   resolve: (a: EngineAnalysis) => void;
   reject: (e: Error) => void;
 };
+
+// A browser may pause a hidden page together with its workers while timers keep counting real time.
+let lastVisibilityChange = -Infinity;
+let watchingVisibility = false;
+function watchVisibility() {
+  if (watchingVisibility || typeof document === "undefined") return;
+  watchingVisibility = true;
+  document.addEventListener("visibilitychange", () => {
+    lastVisibilityChange = performance.now();
+  });
+}
+const pageHiddenSince = (since: number) =>
+  (typeof document !== "undefined" && document.hidden) || lastVisibilityChange >= since;
 
 /** One UCI search at a time. A failed worker rejects every waiter; callers can start a fresh one. */
 export class StockfishClient {
@@ -32,6 +51,7 @@ export class StockfishClient {
     pv: [],
   };
   private timer: ReturnType<typeof setTimeout> | undefined;
+  private searchStartedAt = 0;
   private failure: Error | null = null;
   private ready: Promise<void>;
   private readyResolve!: () => void;
@@ -40,6 +60,7 @@ export class StockfishClient {
   private human: MaiaClient | null = null;
 
   constructor(private onHumanStatus: (status: HumanStatus) => void = () => {}) {
+    watchVisibility();
     this.ready = new Promise((resolve, reject) => {
       this.readyResolve = resolve;
       this.readyReject = reject;
@@ -74,7 +95,10 @@ export class StockfishClient {
     fen: string,
     skill: EngineStrength = 20,
     history?: string[],
+    limit?: SearchLimit,
   ): Promise<EngineAnalysis> {
+    if (limit && !(Number.isSafeInteger(limit.nodes) && limit.nodes > 0))
+      throw new Error("The engine search limit must be a positive whole number of nodes.");
     await this.ready;
     if (this.failure) throw this.failure;
     if (typeof skill === "object") {
@@ -82,7 +106,7 @@ export class StockfishClient {
       return this.human.analyzePosition(fen, skill.elo, history);
     }
     return new Promise((resolve, reject) => {
-      this.pending.push({ fen, skill, history, resolve, reject });
+      this.pending.push({ fen, skill, history, limit, resolve, reject });
       this.next();
     });
   }
@@ -96,6 +120,9 @@ export class StockfishClient {
       depth: 0,
       pv: [],
     };
+    // Hash and move-ordering history from earlier searches change a fixed-node result,
+    // so each one starts from a cleared engine and depends only on its own position.
+    if (this.active.limit) this.worker.postMessage("ucinewgame");
     for (const command of strengthCommands(this.active.skill))
       this.worker.postMessage(command);
     this.worker.postMessage(
@@ -107,16 +134,29 @@ export class StockfishClient {
         : "position fen " + this.active.fen,
     );
     // The same fixed search budget is used for both sides of a move comparison.
-    this.worker.postMessage("go movetime 500");
-    this.timer = setTimeout(
-      () =>
-        this.fail(
-          new Error(
-            "The engine stopped responding. Your position is saved; retry the engine.",
-          ),
-        ),
-      15000,
+    this.worker.postMessage(
+      this.active.limit
+        ? `go nodes ${this.active.limit.nodes}`
+        : "go movetime 500",
     );
+    this.searchStartedAt = performance.now();
+    this.armSearchTimer();
+  }
+  private armSearchTimer() {
+    this.timer = setTimeout(() => {
+      // A node-limited search the page was hidden during may have been paused, not stuck: give it
+      // a fresh 15 seconds instead of failing the moment the page wakes up.
+      if (this.active?.limit && pageHiddenSince(this.searchStartedAt)) {
+        this.searchStartedAt = performance.now();
+        this.armSearchTimer();
+        return;
+      }
+      this.fail(
+        new Error(
+          "The engine stopped responding. Your position is saved; retry the engine.",
+        ),
+      );
+    }, 15000);
   }
   private receive(line: string) {
     if (this.failure) return;
@@ -130,10 +170,14 @@ export class StockfishClient {
       return;
     }
     if (!this.active) return;
+    // Bound lines are partial results and secondary MultiPV lines describe other moves:
+    // neither may replace the latest exact score of the main line.
+    const multipv = line.match(/\bmultipv (\d+)/);
     if (
       line.startsWith("info ") &&
-      !line.includes(" upperbound ") &&
-      !line.includes(" lowerbound ")
+      !line.includes(" upperbound") &&
+      !line.includes(" lowerbound") &&
+      (!multipv || Number(multipv[1]) === 1)
     ) {
       const score = line.match(/\bscore (cp|mate) (-?\d+)/);
       const depth = line.match(/\bdepth (\d+)/);

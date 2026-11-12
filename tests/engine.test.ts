@@ -1,4 +1,4 @@
-import { test } from "node:test";
+import { mock, test } from "node:test";
 import assert from "node:assert/strict";
 import { StockfishClient } from "../lib/engine/stockfish-client";
 class FakeWorker {
@@ -155,4 +155,135 @@ test("human opponent uses a separate worker and cannot contaminate coach evaluat
   worker.emit("bestmove d2d4");
   assert.equal((await coach).scoreCp,25);
   engine.terminate(); assert(human.ended);
+});
+
+test("a node limit sends go nodes; without one the search stays at movetime 500", async () => {
+  const { engine, worker } = await ready();
+  const limited = engine.analyzePosition("ignored", 20, ["e2e4"], { nodes: 150000 });
+  await Promise.resolve();
+  assert.equal(worker.messages.at(-1), "go nodes 150000");
+  assert(worker.messages.includes("position startpos moves e2e4"));
+  worker.emit("info depth 15 score cp -20 nodes 150000 pv e7e5 g1f3");
+  worker.emit("bestmove e7e5");
+  assert.deepEqual(await limited, { bestMove: "e7e5", scoreCp: -20, mateIn: null, depth: 15, pv: ["e7e5", "g1f3"] });
+  const timed = engine.analyzePosition("test-fen");
+  await Promise.resolve();
+  assert.equal(worker.messages.at(-1), "go movetime 500");
+  worker.emit("bestmove d2d4");
+  await timed;
+  assert.equal(worker.messages.filter((m) => m.startsWith("go ")).length, 2);
+  engine.terminate();
+});
+
+test("an invalid node limit is rejected without reaching the engine", async () => {
+  const { engine, worker } = await ready();
+  for (const nodes of [0, -5, 1.5, Number.NaN])
+    await assert.rejects(engine.analyzePosition("fen", 20, [], { nodes }), /positive whole number/);
+  assert(!worker.messages.some((m) => m.startsWith("go ")));
+  engine.terminate();
+});
+
+test("a trailing bound line cannot replace the latest exact score, depth or line", async () => {
+  const { engine, worker } = await ready();
+  const p = engine.analyzePosition("test", 20, [], { nodes: 1000 });
+  await Promise.resolve();
+  worker.emit("info depth 14 seldepth 18 multipv 1 score cp 42 nodes 900 pv e2e4 e7e5 g1f3");
+  worker.emit("info depth 15 seldepth 20 multipv 1 score cp 90 lowerbound nodes 990 pv d2d4");
+  worker.emit("info depth 15 seldepth 20 multipv 1 score cp -10 upperbound nodes 1000 pv c2c4");
+  worker.emit("bestmove e2e4 ponder e7e5");
+  assert.deepEqual(await p, { bestMove: "e2e4", scoreCp: 42, mateIn: null, depth: 14, pv: ["e2e4", "e7e5", "g1f3"] });
+  engine.terminate();
+});
+
+test("secondary MultiPV lines never overwrite the main line", async () => {
+  const { engine, worker } = await ready();
+  const p = engine.analyzePosition("test", 20, [], { nodes: 1000 });
+  await Promise.resolve();
+  worker.emit("info depth 12 multipv 1 score mate 2 pv d1h5 g7g6");
+  worker.emit("info depth 12 multipv 2 score cp -300 pv a2a3 a7a6");
+  worker.emit("info depth 12 multipv 10 score cp 5 pv h2h3");
+  worker.emit("bestmove d1h5");
+  assert.deepEqual(await p, { bestMove: "d1h5", scoreCp: null, mateIn: 2, depth: 12, pv: ["d1h5", "g7g6"] });
+  engine.terminate();
+});
+
+test("a node-limited search starts from a cleared engine so its result never depends on earlier searches", async () => {
+  const { engine, worker } = await ready();
+  const coach = engine.analyzePosition("coach-fen");
+  await Promise.resolve();
+  worker.emit("bestmove e2e4");
+  await coach;
+  // Hash and move-ordering history left behind by any earlier search would change a fixed-node result.
+  for (const history of [["e2e4"], ["e2e4", "e7e5"]]) {
+    const start = worker.messages.length;
+    const p = engine.analyzePosition("ignored", 20, history, { nodes: 150000 });
+    await Promise.resolve();
+    const sent = worker.messages.slice(start);
+    const clear = sent.indexOf("ucinewgame");
+    assert(clear >= 0, "every fixed-node search must clear the engine first");
+    assert(clear < sent.indexOf("position startpos moves " + history.join(" ")));
+    assert.equal(sent.at(-1), "go nodes 150000");
+    worker.emit("bestmove d2d4");
+    await p;
+  }
+  // Existing movetime callers keep their warm hash and exact command sequence.
+  const start = worker.messages.length;
+  const timed = engine.analyzePosition("test-fen");
+  await Promise.resolve();
+  assert(!worker.messages.slice(start).includes("ucinewgame"));
+  worker.emit("bestmove d2d4");
+  await timed;
+  engine.terminate();
+});
+
+test("a node-limited search the page was hidden during gets a fresh budget; a stuck one still fails", async () => {
+  const listeners: (() => void)[] = [];
+  const page = { hidden: false, addEventListener: (_: string, listener: () => void) => listeners.push(listener) };
+  const setHidden = (hidden: boolean) => {
+    page.hidden = hidden;
+    listeners.forEach((listener) => listener());
+  };
+  Object.assign(globalThis, { document: page });
+  mock.timers.enable({ apis: ["setTimeout"] });
+  try {
+    const { engine, worker } = await ready();
+    // The browser pauses the hidden page and its worker for 20 seconds, then wakes it.
+    const paused = engine.analyzePosition("ignored", 20, ["e2e4"], { nodes: 150000 });
+    await Promise.resolve();
+    setHidden(true);
+    mock.timers.tick(20000);
+    setHidden(false);
+    mock.timers.tick(5000);
+    worker.emit("info depth 14 score cp 10 pv e7e5");
+    worker.emit("bestmove e7e5");
+    assert.equal((await paused).bestMove, "e7e5");
+    // Hidden at the moment the timer runs (the page has not woken yet): still not a failure.
+    const asleep = engine.analyzePosition("ignored", 20, ["e2e4"], { nodes: 150000 });
+    await Promise.resolve();
+    page.hidden = true;
+    mock.timers.tick(15000);
+    page.hidden = false;
+    worker.emit("bestmove e7e5");
+    assert.equal((await asleep).bestMove, "e7e5");
+    // A visible page whose engine never answers still fails after 15 seconds.
+    const stuck = engine.analyzePosition("ignored", 20, ["e2e4"], { nodes: 150000 });
+    const failed = assert.rejects(stuck, /stopped responding/);
+    await Promise.resolve();
+    mock.timers.tick(15000);
+    await failed;
+    assert(worker.ended);
+
+    // Play's searches (no node limit) keep the plain 15-second watchdog, hidden or not.
+    const play = await ready();
+    const timed = play.engine.analyzePosition("test-fen");
+    const timedOut = assert.rejects(timed, /stopped responding/);
+    await Promise.resolve();
+    setHidden(true);
+    mock.timers.tick(15000);
+    await timedOut;
+    setHidden(false);
+  } finally {
+    mock.timers.reset();
+    delete (globalThis as { document?: unknown }).document;
+  }
 });

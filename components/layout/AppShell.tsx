@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   IconBook2,
   IconRoute,
@@ -21,6 +21,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const roadmap = path === "/learn";
   const lesson = path === "/learn/foundations";
   const [dark, setDark] = useState(true);
+  const studyNav = useRef<HTMLElement>(null);
+  // On narrow screens the study nav scrolls sideways; keep the current section in view.
+  useEffect(() => {
+    studyNav.current
+      ?.querySelector("[aria-current]")
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [path]);
   useEffect(() => {
     let next = true;
     try {
@@ -93,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
       {!playing && !roadmap && !lesson && !studying && (
         <div className="study-nav-wrap">
-          <nav className="study-nav" aria-label="Study sections">
+          <nav className="study-nav" aria-label="Study sections" ref={studyNav}>
             <Link
               href="/study"
               aria-current={path.startsWith("/study") ? "page" : undefined}
@@ -109,12 +116,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               href="/games"
               aria-current={
-                path === "/games" || path.startsWith("/review")
+                (path.startsWith("/games") && !path.startsWith("/games/insights")) ||
+                path.startsWith("/review")
                   ? "page"
                   : undefined
               }
             >
               Your games
+            </Link>
+            <Link
+              href="/games/insights"
+              aria-current={
+                path.startsWith("/games/insights") ? "page" : undefined
+              }
+            >
+              Your leaks
             </Link>
           </nav>
         </div>

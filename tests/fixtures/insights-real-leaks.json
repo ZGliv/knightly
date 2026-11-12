@@ -1,0 +1,158 @@
+[
+ {
+  "name": "real-1",
+  "userColor": "white",
+  "ply": 43,
+  "nodes": 150000,
+  "moves": "1. c4 f5 2. d4 Nf6 3. Nc3 e6 4. g3 Bb4 5. Bg2 Bxc3+ 6. bxc3 O-O 7. Nf3 d6 8. Nd2 Nc6 9. O-O e5 10. c5 exd4 11. cxd4 Nxd4 12. cxd6 Qxd6 13. e3 Ne6 14. Qc2 Ng5 15. Nc4 Qe6 16. Ba3 Re8 17. Rfd1 Rb8 18. Bb2 Nge4 19. Ne5 c6 20. Bf1 Nd5 21. Bc4 Kh8 22. f3 Nd6 23. Bb3 Nxe3 24. Qc5 Nd5 25. Rxd5 cxd5 26. Bxd5 b6 27. Qxd6 Qxd6 28. Nf7+ Kg8 29. Nxd6+ Be6 30. Nxe8 Bxd5 31. Nd6 Bxf3 32. Nxf5 Rd8 33. Rf1 Bb7 34. Ne7+ Kh8 35. Rf7 Rd1+ 36. Kf2 Rd2+ 37. Ke3 Rxb2 38. Rf8# 1-0",
+  "before": {
+   "eval": {
+    "kind": "cp",
+    "value": 219
+   },
+   "best": "c4d5",
+   "line": [
+    "c4d5",
+    "c6d5",
+    "c2c7",
+    "f5f4",
+    "c7b8",
+    "e4f2",
+    "g1f2",
+    "e6f5"
+   ]
+  },
+  "after": {
+   "eval": {
+    "kind": "cp",
+    "value": 97
+   },
+   "line": [
+    "e4g5",
+    "d1d2",
+    "e6e7",
+    "h2h4",
+    "g5f7",
+    "e5f7",
+    "e7f7",
+    "e3e4"
+   ]
+  }
+ },
+ {
+  "name": "real-2",
+  "userColor": "black",
+  "ply": 38,
+  "nodes": 2000000,
+  "moves": "1. d4 Nf6 2. e4 e6 3. Nc3 c5 4. f4 cxd4 5. Qxd4 Nc6 6. Qf2 Bb4 7. Bd3 O-O 8. Nf3 d5 9. e5 Ng4 10. Qg3 Nh6 11. O-O d4 12. Ne4 Nf5 13. Qh3 Ne3 14. Nfg5 h6 15. Nf6+ Kh8 16. Bxe3 dxe3 17. c3 Bc5 18. b4 Bb6 19. Kh1 Ne7 0-1",
+  "before": {
+   "eval": {
+    "kind": "cp",
+    "value": -239
+   },
+   "best": "d8d3",
+   "line": [
+    "d8d3",
+    "g5e4",
+    "c6e7",
+    "a1d1",
+    "d3c2",
+    "d1c1",
+    "c2b2",
+    "f1e1"
+   ]
+  },
+  "after": {
+   "eval": {
+    "kind": "cp",
+    "value": 290
+   },
+   "line": [
+    "a1d1",
+    "e7f5",
+    "d3f5",
+    "e3e2",
+    "g5f7",
+    "f8f7",
+    "d1d8",
+    "b6d8"
+   ]
+  }
+ },
+ {
+  "name": "real-3",
+  "userColor": "black",
+  "ply": 62,
+  "nodes": 150000,
+  "moves": "1. e4 c5 2. Nf3 d6 3. Bc4 e6 4. d4 cxd4 5. Nxd4 Nf6 6. Nc3 a6 7. O-O b5 8. Bd3 Bb7 9. Re1 Be7 10. Be3 Nbd7 11. Qe2 O-O 12. a4 b4 13. Nd1 a5 14. c3 Nc5 15. cxb4 axb4 16. Bd2 Nxd3 17. Qxd3 Bxe4 18. Rxe4 Nxe4 19. Qxe4 Qb6 20. b3 d5 21. Qg4 Rac8 22. Ne3 Bc5 23. Nf3 Rc7 24. Ng5 d4 25. Nc4 Qc6 26. Qh5 h6 27. Nf3 Rd8 28. Nce5 Qe4 29. Re1 Qc2 30. Bxh6 gxh6 31. Qxh6 Qxb3 32. Ng5 f5 33. Nxe6 Rh7 34. Qg6+ Kh8 35. Nxd8 d3 36. Nef7+ 1-0",
+  "before": {
+   "eval": {
+    "kind": "cp",
+    "value": 0
+   },
+   "best": "d8d5",
+   "line": [
+    "d8d5",
+    "h6g5",
+    "g8f8",
+    "g5h6"
+   ]
+  },
+  "after": {
+   "eval": {
+    "kind": "cp",
+    "value": 525
+   },
+   "line": [
+    "h6g5",
+    "g8h7",
+    "g5d8",
+    "c7b7",
+    "f3g5",
+    "h7g7",
+    "e5d7",
+    "b7d7"
+   ]
+  }
+ },
+ {
+  "name": "real-4",
+  "userColor": "white",
+  "ply": 37,
+  "nodes": 2000000,
+  "moves": "1. d4 d5 2. c4 dxc4 3. Nf3 Bf5 4. Bf4 Nf6 5. e3 b5 6. a4 Bxb1 7. Qxb1 c6 8. axb5 cxb5 9. Ne5 e6 10. Bg5 Bb4+ 11. Kd1 h6 12. Bxf6 Qxf6 13. Qe4 Qxf2 14. Nf3 Qxb2 15. Rb1 Qc3 16. Rxb4 Qxb4 17. Qxa8 O-O 18. Qxa7 c3 19. Qc5 Qb1+ 20. Ke2 c2 0-1",
+  "before": {
+   "eval": {
+    "kind": "cp",
+    "value": 51
+   },
+   "best": "a7a2",
+   "line": [
+    "a7a2",
+    "b8c6",
+    "f1d3",
+    "e6e5",
+    "f3e5",
+    "c6e5",
+    "d4e5",
+    "b4g4"
+   ]
+  },
+  "after": {
+   "eval": {
+    "kind": "cp",
+    "value": -608
+   },
+   "line": [
+    "b4b1",
+    "d1e2",
+    "c3c2",
+    "e2f2",
+    "c2c1q",
+    "h1g1",
+    "c1c5",
+    "d4c5"
+   ]
+  }
+ }
+]

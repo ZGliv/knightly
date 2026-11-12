@@ -7,6 +7,7 @@ import {
   IconArrowRight,
   IconArchive,
   IconChevronDown,
+  IconChartBar,
 } from "@tabler/icons-react";
 import { PositionPreview } from "@/components/library/PositionPreview";
 import { Chess } from "chess.js";
@@ -131,6 +132,16 @@ export default function GamesPage() {
           {notice}
         </p>
       )}
+      <Link href="/games/insights" className="insights-entry">
+        <IconChartBar size={22} stroke={1.6} aria-hidden="true" />
+        <span>
+          <strong>Your leaks</strong>
+          <small>
+            Import your recent chess.com games and see where you lose the most.
+          </small>
+        </span>
+        <IconArrowRight size={16} aria-hidden="true" />
+      </Link>
       <div className="archive-toolbar">
         <label className="library-search">
           <IconSearch size={17} />
