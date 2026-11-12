@@ -504,8 +504,8 @@ export default function PlayPage() {
               </p>
             )}
             {training.error && <p role="alert">{training.error}</p>}
-            <Link href="/learn" className="subtle-link">
-              Your study path <IconArrowRight size={14} />
+            <Link href="/today" className="subtle-link">
+              Today&apos;s training <IconArrowRight size={14} />
             </Link>
           </section>
           {game.result === "*" && game.engineElo === undefined && (

@@ -149,7 +149,7 @@ export default function LearnPage() {
   return (
     <section className="lesson-adventure">
       <header className="lesson-topbar">
-        <Link href={`/learn?lesson=${lesson.id}`} aria-label="Back to learning path"><IconArrowLeft size={20}/> Learning path</Link>
+        <Link href={`/learn?lesson=${lesson.id}`} aria-label="Back to Rules refresher"><IconArrowLeft size={20}/> Rules refresher</Link>
         <span>{chapter?.title ?? PHASE_LABELS[phase]}</span>
         <details className="lesson-options">
           <summary aria-label="Lesson options"><IconAdjustmentsHorizontal size={20}/><span>Options</span></summary>
@@ -164,7 +164,7 @@ export default function LearnPage() {
       <Exercise key={`${active?.key ?? phase}-${stage}-${side}`} stage={stage} side={side}
         attempts={attempts} lesson={lesson} reason={active?.reason ?? recommendation.reason} onComplete={complete}
         onTransfer={lesson => {setActive({lesson,reason:"Same principle, a different position. Try without hints first; help is still available.",key:Date.now()});setStage("transfer");}}
-        onNext={currentId => {setStage("guided");const index=COURSE_ORDER.indexOf(currentId as typeof COURSE_ORDER[number]);const lesson=LESSONS.find(item=>item.id===COURSE_ORDER[(index+1)%COURSE_ORDER.length])!;setPhase(lesson.phase);setSourceGame(null);setActive({lesson,reason:"The next idea in the course order. You can return to any earlier idea from Learning path.",key:Date.now()});}}
+        onNext={currentId => {setStage("guided");const index=COURSE_ORDER.indexOf(currentId as typeof COURSE_ORDER[number]);const lesson=LESSONS.find(item=>item.id===COURSE_ORDER[(index+1)%COURSE_ORDER.length])!;setPhase(lesson.phase);setSourceGame(null);setActive({lesson,reason:"The next idea in the course order. You can return to any earlier idea from Rules refresher.",key:Date.now()});}}
       />
       <details className="lesson-history"><summary>Recent practice & lesson context</summary>
         <p>{sourceGame ? "These teaching positions connect to your game practice. They do not explain every mistake in that game." : focus.reason}</p>
@@ -449,7 +449,7 @@ function Exercise({
             >
               Next position
             </button>
-            <Link href={`/learn?lesson=${base.id}`} className="btn secondary">Learning path</Link>
+            <Link href={`/learn?lesson=${base.id}`} className="btn secondary">Rules refresher</Link>
             <Link href="/study?view=practice" className="btn secondary">
               My practice
             </Link>

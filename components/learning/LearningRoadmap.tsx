@@ -75,7 +75,7 @@ export function LearningRoadmap() {
   if (!ready) return <section className="roadmap-loading" role="status">Opening your learning path…</section>;
   return <section className="learning-roadmap">
     <header className="roadmap-heading">
-      <h1>Learn</h1><p>{SEQUENCES.length} lessons and {OPENINGS.length} opening studies.</p>
+      <h1>Rules refresher</h1><p>{SEQUENCES.length} lessons and {OPENINGS.length} opening studies.</p>
       <Link href="/study">Browse studies <IconArrowRight size={16} /></Link>
     </header>
     {errors.map(message => <p className="roadmap-alert" role="alert" key={message}>{message}</p>)}

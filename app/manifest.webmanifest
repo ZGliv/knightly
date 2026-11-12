@@ -3,7 +3,7 @@
   "name": "Knightly",
   "short_name": "Knightly",
   "description": "Play chess and study your own decisions.",
-  "start_url": "/play",
+  "start_url": "/today",
   "scope": "/",
   "display": "standalone",
   "background_color": "#09090b",

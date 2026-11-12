@@ -35,6 +35,34 @@ export interface MasterGamesFile {
 /** Moves the app plays for both sides before the user starts guessing. */
 export const AUTO_PLY = 16;
 
+/**
+ * Broadcasts write some names surname first or with an initial ("Gukesh D", "Erigaisi Arjun").
+ * Known players get the name they are usually called by and a short name for compact lists.
+ */
+const KNOWN_PLAYERS: Record<string, { full: string; short: string }> = {
+  "Gukesh D": { full: "Gukesh Dommaraju", short: "Gukesh" },
+  "D Gukesh": { full: "Gukesh Dommaraju", short: "Gukesh" },
+  "Erigaisi Arjun": { full: "Arjun Erigaisi", short: "Erigaisi" },
+  "Arjun Erigaisi": { full: "Arjun Erigaisi", short: "Erigaisi" },
+  "Liren Ding": { full: "Ding Liren", short: "Ding" },
+  "Ding Liren": { full: "Ding Liren", short: "Ding" },
+  "Jiner Zhu": { full: "Zhu Jiner", short: "Zhu" },
+  "Zhu Jiner": { full: "Zhu Jiner", short: "Zhu" },
+  "Praggnanandhaa R": { full: "R Praggnanandhaa", short: "Praggnanandhaa" },
+  "R Praggnanandhaa": { full: "R Praggnanandhaa", short: "Praggnanandhaa" },
+};
+
+/** The name to show in full, e.g. "Arjun Erigaisi" for the broadcast's "Erigaisi Arjun". */
+export const fullName = (name: string) => KNOWN_PLAYERS[name.trim()]?.full ?? name.trim();
+
+/** The surname for compact lists. A one-letter initial is never used: "Gukesh D" gives "Gukesh". */
+export function shortName(name: string): string {
+  const known = KNOWN_PLAYERS[name.trim()];
+  if (known) return known.short;
+  const words = name.trim().split(/\s+/).filter((w) => w.replace(/\./g, "").length > 1);
+  return words.at(-1) ?? name.trim();
+}
+
 export const fullMoves = (game: Pick<MasterGame, "moves">) => Math.ceil(game.moves.length / 2);
 export const playerName = (game: MasterGame, side: Side) => (side === "white" ? game.white : game.black);
 export const opponentName = (game: MasterGame) => playerName(game, game.proSide === "white" ? "black" : "white");

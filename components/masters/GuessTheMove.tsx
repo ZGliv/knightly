@@ -5,7 +5,7 @@ import { ChessBoard } from "@/components/chess/ChessBoard";
 import { StockfishClient } from "@/lib/engine/stockfish-client";
 import { winPercent } from "@/lib/insights/winprob";
 import { whiteEvaluation } from "@/lib/learning/coach/model";
-import { AUTO_PLY, guessCount, opponentName, type MasterGame } from "@/lib/masters/games";
+import { AUTO_PLY, fullName, guessCount, opponentName, type MasterGame } from "@/lib/masters/games";
 import {
   COMPARE_NODES,
   MAX_POINTS_PER_MOVE,
@@ -19,7 +19,8 @@ import {
   type Verdict,
 } from "@/lib/masters/grade";
 import { STRUCTURES } from "@/lib/masters/structure";
-import { recordFinish, saveRecord, type MastersRecord } from "@/lib/masters/storage";
+import { recordFinish, recordGuess, saveRecord, type MastersRecord } from "@/lib/masters/storage";
+import { localDay } from "@/lib/today/day";
 
 const OPENING_DELAY = 450;
 const REPLY_DELAY = 750;
@@ -75,6 +76,11 @@ export function GuessTheMove({ game, record, coachAvailable, onRecord, onBack, o
   const engine = useRef<StockfishClient | null>(null);
   const token = useRef(0);
   const saved = useRef(false);
+  // The newest record, so a guess saved while the engine was thinking is not lost by the next save.
+  const latest = useRef(record);
+  useEffect(() => {
+    latest.current = record;
+  }, [record]);
 
   const done = ply >= total;
   const needsAuto = !done && !checking && (ply < AUTO_PLY || !proTurnAt(ply));
@@ -105,14 +111,15 @@ export function GuessTheMove({ game, record, coachAvailable, onRecord, onBack, o
     if (!done || saved.current) return;
     saved.current = true;
     const next = recordFinish(
-      record,
+      latest.current,
       game.id,
       { score, max: asked * MAX_POINTS_PER_MOVE, tally: tally(verdicts) },
       new Date().toISOString(),
     );
+    latest.current = next;
     saveRecord(next);
     queueMicrotask(() => onRecord(next));
-  }, [done, record, game.id, score, asked, verdicts, onRecord]);
+  }, [done, game.id, score, asked, verdicts, onRecord]);
 
   const client = () => (engine.current ??= new StockfishClient());
 
@@ -161,6 +168,13 @@ export function GuessTheMove({ game, record, coachAvailable, onRecord, onBack, o
       if (id !== token.current) return;
       const verdict: Verdict = matched ? "matched" : userUci ? verdictForGap(proWin, userWin!) : "shown";
       setVerdicts((v) => [...v, verdict]);
+      if (userUci) {
+        // Counted per day for the daily session on /today.
+        const counted = recordGuess(latest.current, localDay(Date.now()));
+        latest.current = counted;
+        saveRecord(counted);
+        onRecord(counted);
+      }
       setFeedback((f) =>
         f && {
           ...f,
@@ -213,8 +227,8 @@ export function GuessTheMove({ game, record, coachAvailable, onRecord, onBack, o
           userWin: f.userWin ?? f.proWin,
           proLine: f.lineUci.slice(0, f.lineSan.length),
           tags: game.tags,
-          white: game.white,
-          black: game.black,
+          white: fullName(game.white),
+          black: fullName(game.black),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { explanation?: string; error?: string };
@@ -246,7 +260,7 @@ export function GuessTheMove({ game, record, coachAvailable, onRecord, onBack, o
   if (done) status = "Game over";
   else if (checking) status = "Comparing with the game move…";
   else if (ply < AUTO_PLY) status = `Playing the opening… move ${moveNo} of 8`;
-  else if (needsAuto) status = `${opponentName(game)} is replying…`;
+  else if (needsAuto) status = `${fullName(opponentName(game))} is replying…`;
   else status = `Your move as ${game.proSide === "white" ? "White" : "Black"}: what did ${game.pro.split(" ")[0]} play here?`;
 
   return (
@@ -257,7 +271,7 @@ export function GuessTheMove({ game, record, coachAvailable, onRecord, onBack, o
         </button>
         <p className="masters-play-title">
           <strong>
-            {game.white} – {game.black}
+            {fullName(game.white)} – {fullName(game.black)}
           </strong>
           <span>
             {game.event} · {game.opening || "Opening not recorded"}

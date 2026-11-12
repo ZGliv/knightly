@@ -15,7 +15,12 @@ export interface FinishedGame {
 export interface MastersRecord {
   version: 1;
   games: Record<string, FinishedGame>;
+  /** Moves guessed per local calendar day ("YYYY-MM-DD"), finished game or not. Older saves have none. */
+  guesses?: Record<string, number>;
 }
+
+/** Days of guess counts kept; older days are dropped so storage does not grow forever. */
+const GUESS_DAYS_KEPT = 60;
 
 type KeyValue = Pick<Storage, "getItem" | "setItem">;
 
@@ -56,7 +61,11 @@ export function loadRecord(storage: KeyValue | null = browserStorage()): Masters
       )
         games[id] = g;
     }
-    return { version: 1, games };
+    const guesses: Record<string, number> = {};
+    if (parsed.guesses && typeof parsed.guesses === "object")
+      for (const [day, n] of Object.entries(parsed.guesses))
+        if (/^\d{4}-\d{2}-\d{2}$/.test(day) && Number.isInteger(n) && n > 0) guesses[day] = n;
+    return Object.keys(guesses).length ? { version: 1, games, guesses } : { version: 1, games };
   } catch {
     return emptyRecord();
   }
@@ -82,6 +91,7 @@ export function recordFinish(
 ): MastersRecord {
   const prev = record.games[gameId];
   return {
+    ...record,
     version: 1,
     games: {
       ...record.games,
@@ -96,3 +106,13 @@ export function recordFinish(
     },
   };
 }
+
+/** Counts one guessed move on `day` (local "YYYY-MM-DD"). Pure: returns a new record. */
+export function recordGuess(record: MastersRecord, day: string): MastersRecord {
+  const guesses = { ...record.guesses, [day]: (record.guesses?.[day] ?? 0) + 1 };
+  const kept = Object.keys(guesses).sort().slice(-GUESS_DAYS_KEPT);
+  return { ...record, guesses: Object.fromEntries(kept.map((d) => [d, guesses[d]])) };
+}
+
+/** Moves guessed on `day` (local "YYYY-MM-DD"). */
+export const guessesOn = (record: MastersRecord, day: string) => record.guesses?.[day] ?? 0;

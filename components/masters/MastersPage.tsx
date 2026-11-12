@@ -1,13 +1,11 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GuessTheMove } from "./GuessTheMove";
-import { fullMoves, groupGames, parseGamesFile, prosIn, type MasterGame } from "@/lib/masters/games";
+import { fullMoves, groupGames, parseGamesFile, prosIn, shortName, type MasterGame } from "@/lib/masters/games";
 import { STRUCTURES } from "@/lib/masters/structure";
 import { emptyRecord, loadRecord, type MastersRecord } from "@/lib/masters/storage";
 
 type Load = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; games: MasterGame[] };
-
-const surname = (name: string) => name.split(" ").at(-1) ?? name;
 
 export function MastersPage() {
   const [load, setLoad] = useState<Load>({ status: "loading" });
@@ -128,7 +126,7 @@ export function MastersPage() {
                       <li key={game.id}>
                         <button type="button" className="masters-card" onClick={() => open(game.id)}>
                           <span className="masters-card-players">
-                            {surname(game.white)} – {surname(game.black)}
+                            {shortName(game.white)} – {shortName(game.black)}
                             <em>{game.result}</em>
                           </span>
                           <span className="masters-card-meta">
@@ -137,7 +135,7 @@ export function MastersPage() {
                           {game.opening && <span className="masters-card-opening">{game.opening}</span>}
                           <span className="masters-card-foot">
                             <span>
-                              Play as {game.proSide === "white" ? "White" : "Black"} ({surname(game.pro)})
+                              Play as {game.proSide === "white" ? "White" : "Black"} ({shortName(game.pro)})
                             </span>
                             {saved && (
                               <span className="masters-card-best">

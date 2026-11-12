@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { IconArrowRight, IconCheck, IconX } from "@tabler/icons-react";
 import { openInsightsStore } from "@/lib/insights/store";
 import { recordResult, weakThemes } from "@/lib/puzzles/progress";
 import { initialRating } from "@/lib/puzzles/rating";
 import { bandsFor, choosePuzzle, RATING_WINDOW, type Filter } from "@/lib/puzzles/selection";
 import { loadProgress, saveProgress } from "@/lib/puzzles/storage";
-import { THEMES, themeName } from "@/lib/puzzles/themes";
+import { FILTER_THEMES, THEMES, themeName } from "@/lib/puzzles/themes";
 import { emptyProgress, type Puzzle, type PuzzleAttempt, type PuzzleIndex, type PuzzleProgress } from "@/lib/puzzles/types";
 import { PuzzleBoard } from "./PuzzleBoard";
 import { PuzzleStats } from "./PuzzleStats";
@@ -27,7 +28,13 @@ async function startingRating(): Promise<number> {
   }
 }
 
+/** A `?theme=` link (e.g. from Today) preselects that theme when the filter offers it. */
+function linkedTheme(value: string | null): string | null {
+  return value && (FILTER_THEMES as readonly string[]).includes(value) ? value : null;
+}
+
 export function PuzzlesPage() {
+  const requested = linkedTheme(useSearchParams().get("theme"));
   const [progress, setProgress] = useState<PuzzleProgress>(emptyProgress);
   const [startRating, setStartRating] = useState<number | null>(null);
   const [storageOk, setStorageOk] = useState(true);
@@ -36,8 +43,8 @@ export function PuzzlesPage() {
   const [current, setCurrent] = useState<Current | null>(null);
   const [noneLeft, setNoneLeft] = useState(false);
   const [result, setResult] = useState<{ attempt: PuzzleAttempt; repeat: boolean } | null>(null);
-  const [mode, setMode] = useState<Mode>("all");
-  const [theme, setTheme] = useState<string>("fork");
+  const [mode, setMode] = useState<Mode>(requested ? "theme" : "all");
+  const [theme, setTheme] = useState<string>(requested ?? "fork");
   const [now, setNow] = useState(0);
   const [loading, setLoading] = useState(false);
   const pool = useRef(new Map<string, Puzzle[]>());
@@ -97,7 +104,7 @@ export function PuzzlesPage() {
       setStorageOk(stored.available);
       setStartRating(start);
       setIndex(idx);
-      void serve({ idx, progress: stored.progress, rating: stored.progress.rating ?? start, filter: { kind: "all" } });
+      void serve({ idx, progress: stored.progress, rating: stored.progress.rating ?? start, filter: requested ? { kind: "theme", theme: requested } : { kind: "all" } });
     })();
     return () => {
       live = false;

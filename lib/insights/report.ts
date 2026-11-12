@@ -55,7 +55,7 @@ const AFTER_OPENING_PLY = 24;
 const NEUTRAL_WIN = 50;
 /** The family chess.com games get when their PGN names no opening; never a "problem opening". */
 const UNKNOWN_OPENING = "Unknown opening";
-const MIN_ANALYSED_FOR_HEADLINES = 5;
+export const MIN_ANALYSED_FOR_HEADLINES = 5;
 /** Leaks a category needs before it can lead the category headline ahead of quiet mistakes. */
 const MIN_PATTERN_LEAKS = 3;
 const MAX_HEADLINES = 3;

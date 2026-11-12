@@ -4024,3 +4024,55 @@ summary {
 .insights-external {
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   Navigation: five primary items (Today, Puzzles, Openings, Pros, Play) and
+   the "More" row. Fits phones down to 320px; scrolls sideways as a fallback.
+   ========================================================================== */
+.primary-nav {
+  min-width: 0;
+}
+.primary-nav a:focus-visible {
+  outline-offset: -3px;
+}
+@media (max-width: 700px) {
+  .header-inner {
+    gap: 14px;
+  }
+  .primary-nav {
+    flex: 1 1 auto;
+    gap: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .primary-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .primary-nav a {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+@media (max-width: 520px) {
+  /* The logo stays as the home link; its name is kept for screen readers. */
+  .brand span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+@media (max-width: 380px) {
+  .header-inner {
+    gap: 10px;
+    padding: 0 10px;
+  }
+  .primary-nav {
+    gap: 10px;
+  }
+  .primary-nav a {
+    font-size: 12px;
+  }
+}

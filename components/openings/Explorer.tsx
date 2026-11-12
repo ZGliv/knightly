@@ -97,7 +97,7 @@ export function Explorer({ tree, color, data, onChange, path, onPath }: Props) {
           {opening && <h2 className="op-opening">{opening.name}</h2>}
           <p className="op-note">
             {node && node.games > 0
-              ? `${plural(node.games, "of your games")} reached this position. You scored ${score}% from here (a win counts 1, a draw a half).`
+              ? `${node.games === 1 ? "One of your games" : `${node.games} of your games`} reached this position. You scored ${score}% from here (a win counts 1, a draw a half).`
               : "None of your imported games reached this position."}
             {opening && node && opening.count < node.games ? ` The name is the one most of these games ended up with.` : ""}
           </p>

@@ -176,7 +176,7 @@ export default function StudyPage() {
           <p>Openings, middlegames and endings. Pick an idea to work on.</p>
         </div>
         <Link href="/learn" className="subtle-link">
-          Learning path
+          Rules refresher
           <IconArrowRight size={16} />
         </Link>
       </header>
