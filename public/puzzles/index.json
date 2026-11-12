@@ -1,0 +1,56 @@
+{
+  "source": "Lichess puzzle database (CC0)",
+  "bandSize": 200,
+  "bands": [
+    {
+      "min": 400,
+      "file": "0400.json",
+      "count": 400
+    },
+    {
+      "min": 600,
+      "file": "0600.json",
+      "count": 400
+    },
+    {
+      "min": 800,
+      "file": "0800.json",
+      "count": 400
+    },
+    {
+      "min": 1000,
+      "file": "1000.json",
+      "count": 400
+    },
+    {
+      "min": 1200,
+      "file": "1200.json",
+      "count": 400
+    },
+    {
+      "min": 1400,
+      "file": "1400.json",
+      "count": 400
+    },
+    {
+      "min": 1600,
+      "file": "1600.json",
+      "count": 400
+    },
+    {
+      "min": 1800,
+      "file": "1800.json",
+      "count": 400
+    },
+    {
+      "min": 2000,
+      "file": "2000.json",
+      "count": 400
+    },
+    {
+      "min": 2200,
+      "file": "2200.json",
+      "count": 400
+    }
+  ]
+}

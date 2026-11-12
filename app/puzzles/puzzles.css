@@ -1,0 +1,369 @@
+/* Puzzles page. Every class is prefixed pz- because global CSS stays loaded across routes. */
+.pz-page {
+  max-width: 1100px;
+  margin: auto;
+  display: grid;
+  gap: 18px;
+}
+.pz-page h1 {
+  font-size: 27px;
+  margin: 0 0 4px;
+}
+.pz-muted {
+  color: var(--muted);
+  margin: 0;
+}
+.pz-small {
+  font-size: 12px;
+}
+.pz-error {
+  color: var(--warning);
+  margin: 0;
+}
+.pz-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+}
+.pz-link {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* Stats strip */
+.pz-stats {
+  display: grid;
+  gap: 8px;
+}
+.pz-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.pz-strip > div {
+  padding: 12px 16px;
+  min-width: 0;
+}
+.pz-strip > div + div {
+  border-left: 1px solid var(--line);
+}
+.pz-strip dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.pz-strip dd {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pz-strip small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--quiet);
+}
+.pz-theme-stats summary {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.pz-theme-stats ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 6px;
+  max-width: 520px;
+}
+.pz-theme-stats li {
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.pz-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.pz-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.pz-rate {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.pz-rate small {
+  color: var(--quiet);
+}
+
+/* Filter */
+.pz-filter {
+  display: grid;
+  gap: 10px;
+}
+.pz-modes {
+  display: inline-flex;
+  justify-self: start;
+  max-width: 100%;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.pz-modes button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pz-modes button.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.pz-modes button:disabled {
+  opacity: 0.5;
+}
+.pz-theme-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.pz-theme-choice p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Board and side panel */
+.pz-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 600px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.pz-main {
+  min-width: 0;
+}
+.pz-board {
+  display: grid;
+  gap: 10px;
+}
+.pz-board .chessboard-frame {
+  max-width: 600px;
+}
+.pz-prompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+.pz-side {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--quiet);
+  flex: none;
+}
+.pz-side-white {
+  background: var(--board-light);
+}
+.pz-side-black {
+  background: var(--ink);
+}
+.pz-solved strong {
+  color: var(--accent);
+}
+.pz-failed strong {
+  color: var(--warning);
+}
+.pz-feedback,
+.pz-hint {
+  margin: 0;
+  font-size: 13px;
+}
+.pz-hint {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+}
+.pz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pz-solution {
+  display: grid;
+  gap: 8px;
+}
+.pz-line {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.pz-line button {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--muted);
+  padding: 3px 8px;
+  font-size: 13px;
+}
+.pz-line button.pz-yours {
+  color: var(--ink);
+  font-weight: 650;
+  background: var(--accent-soft);
+}
+.pz-line button.pz-current {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.pz-steps {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pz-steps span {
+  flex: 1;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.pz-legend {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 11px;
+}
+.pz-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+.pz-card p {
+  margin: 0;
+}
+.pz-big {
+  font-size: 18px;
+  font-weight: 650;
+}
+.pz-result.is-solved {
+  border-color: var(--accent);
+}
+.pz-result.is-missed {
+  border-color: var(--warning);
+}
+.pz-result-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.is-solved .pz-result-title {
+  color: var(--accent);
+}
+.is-missed .pz-result-title {
+  color: var(--warning);
+}
+.pz-rating-change {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.pz-rating-change strong {
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.pz-up {
+  color: var(--accent);
+  font-weight: 650;
+}
+.pz-down {
+  color: var(--warning);
+  font-weight: 650;
+}
+.pz-themes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.pz-themes li {
+  display: grid;
+  gap: 1px;
+  font-size: 13px;
+}
+.pz-themes span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.pz-next {
+  width: 100%;
+}
+.pz-credit {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 11px;
+}
+
+@media (max-width: 850px) {
+  .pz-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+@media (max-width: 500px) {
+  .pz-strip > div {
+    padding: 10px;
+  }
+  .pz-strip dd {
+    font-size: 18px;
+  }
+  .pz-modes {
+    display: flex;
+  }
+  .pz-modes button {
+    flex: 1;
+    padding: 7px 6px;
+    font-size: 12px;
+  }
+  .pz-theme-stats li {
+    grid-template-columns: minmax(0, 7rem) 1fr auto;
+  }
+}
