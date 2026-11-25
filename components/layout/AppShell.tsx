@@ -5,11 +5,11 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  IconBook,
-  IconCalendarCheck,
+  IconChartDots,
   IconChess,
   IconMoon,
   IconPuzzle,
+  IconSchool,
   IconSun,
   IconArchive,
   IconTrophy,
@@ -19,18 +19,19 @@ import {
 /** True on `prefix` itself and on any page below it. */
 const within = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 
-/** The five daily tools. Each page matches at most one item across both navs. */
+/** The five main tools. Each page matches exactly one item across both navs. */
 const PRIMARY: { href: string; label: string; icon: Icon; match: (path: string) => boolean }[] = [
-  { href: "/today", label: "Today", icon: IconCalendarCheck, match: (p) => p === "/" || within(p, "/today") },
+  { href: "/courses", label: "Courses", icon: IconSchool, match: (p) => p === "/" || within(p, "/courses") },
   { href: "/puzzles", label: "Puzzles", icon: IconPuzzle, match: (p) => within(p, "/puzzles") },
-  { href: "/openings", label: "Openings", icon: IconBook, match: (p) => within(p, "/openings") },
   { href: "/masters", label: "Pros", icon: IconTrophy, match: (p) => within(p, "/masters") },
   { href: "/play", label: "Play", icon: IconChess, match: (p) => within(p, "/play") },
+  { href: "/games/insights", label: "Your leaks", icon: IconChartDots, match: (p) => within(p, "/games/insights") },
 ];
 
 /** Everything else, in the "More" row. /learn/games practises your own Knightly games, so it sits with them. */
 const SECONDARY: { href: string; label: string; match: (path: string) => boolean }[] = [
-  { href: "/games/insights", label: "Your leaks", match: (p) => within(p, "/games/insights") },
+  { href: "/today", label: "Today", match: (p) => within(p, "/today") },
+  { href: "/openings", label: "Your openings", match: (p) => within(p, "/openings") },
   {
     href: "/games",
     label: "Your games",
@@ -78,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
       <header className="app-header">
         <div className="header-inner">
-          <Link href="/today" className="brand">
+          <Link href="/courses" className="brand">
             <Image
               src="/brand/knightly.svg"
               alt=""

@@ -1,0 +1,621 @@
+/* Opening courses. Every class is prefixed cr- because global CSS stays loaded across routes. */
+.cr-page {
+  max-width: 1100px;
+  margin: auto;
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.cr-page h1 {
+  font-size: 27px;
+  margin: 0 0 4px;
+}
+.cr-page h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.cr-muted {
+  color: var(--muted);
+  margin: 0;
+}
+.cr-small {
+  font-size: 12px;
+}
+.cr-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+}
+.cr-credit {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 11px;
+}
+.cr-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 550;
+}
+.cr-back:hover {
+  color: var(--ink);
+}
+.cr-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+.cr-card p {
+  margin: 0;
+}
+.cr-empty {
+  max-width: 600px;
+}
+.cr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.cr-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.cr-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+/* Library */
+.cr-group {
+  display: grid;
+  gap: 12px;
+}
+.cr-courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 14px;
+}
+.cr-course {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  height: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color 0.15s;
+}
+.cr-course:hover {
+  border-color: var(--accent);
+}
+.cr-course-board {
+  align-self: start;
+}
+.cr-course-body {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+}
+.cr-course h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.cr-course .cr-muted {
+  font-size: 13px;
+}
+.cr-setup {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 12px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+.cr-course-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.cr-due {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+/* Course page: a one-row header and tight tabs, so the board starts near the top of the screen.
+   Budget on a 375x812 phone: shell header 65 + "More" row 44 + workspace padding 24, minus the
+   22px pulled back below = 111; title row 22 + 6 + tabs 28 + 6 puts the board at about 173. On an
+   800px-tall desktop: 65 + 48 + 32 - 16 = 129; 28 + 8 + 33 + 10 puts the board at about 208, and
+   capping it at 100dvh - 290 (510px) leaves room for the board controls and move list below it. */
+.cr-course-page {
+  --cr-board-max: min(600px, calc(100vh - 290px));
+  --cr-board-max: min(600px, calc(100dvh - 290px));
+  gap: 8px;
+  margin-top: -16px;
+}
+.cr-course-page > .cr-runner,
+.cr-course-page > .cr-card,
+.cr-course-page > p {
+  margin-top: 2px;
+}
+.cr-course-page > .cr-about {
+  margin-top: 14px;
+}
+.cr-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 28px;
+}
+.cr-top-back {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+.cr-top-back:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.cr-page .cr-top h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cr-top-meta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cr-top-meta strong {
+  color: var(--ink);
+}
+.cr-side-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--quiet);
+}
+.cr-side-dot.is-white {
+  background: #f4f4f0;
+}
+.cr-side-dot.is-black {
+  background: #1d1d1b;
+}
+.cr-about summary,
+.cr-yours summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  cursor: pointer;
+  list-style: none;
+}
+.cr-about summary::-webkit-details-marker,
+.cr-yours summary::-webkit-details-marker {
+  display: none;
+}
+.cr-about summary::after,
+.cr-yours summary::after {
+  content: "Show";
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.cr-about[open] summary::after,
+.cr-yours[open] summary::after {
+  content: "Hide";
+}
+.cr-about h2 {
+  font-size: 15px;
+}
+.cr-define {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cr-meter {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.cr-modes {
+  display: inline-flex;
+  justify-self: start;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.cr-modes a {
+  border-radius: 6px;
+  color: var(--muted);
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cr-modes a:hover {
+  color: var(--ink);
+}
+.cr-modes a[aria-current] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+/* Runner: board and notes */
+.cr-runner {
+  display: grid;
+  grid-template-columns: minmax(0, var(--cr-board-max, 600px)) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.cr-board {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.cr-board .chessboard-frame,
+.cr-board .pz-board .chessboard-frame {
+  max-width: var(--cr-board-max, 600px);
+  margin-inline: auto;
+}
+.cr-moves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cr-moves li span {
+  color: var(--quiet);
+  margin-right: 3px;
+}
+.cr-moves li.is-mine {
+  color: var(--ink);
+  font-weight: 650;
+}
+.cr-side {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.cr-status {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cr-status strong {
+  color: var(--ink);
+}
+.cr-status svg {
+  vertical-align: -3px;
+}
+.cr-good {
+  color: var(--accent);
+  font-weight: 600;
+}
+.cr-warn {
+  color: var(--warning);
+  font-weight: 600;
+}
+.cr-streak {
+  color: var(--ink);
+}
+.cr-line-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.cr-line-name .eyebrow {
+  margin-right: 6px;
+}
+
+/* The coach's speech bubble: a card with a tail pointing toward the board. */
+.cr-coach {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.cr-coach::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+.cr-coach.is-mistake {
+  border-color: var(--warning);
+}
+.cr-coach.is-mistake::before {
+  border-color: var(--warning);
+}
+.cr-coach.is-done {
+  border-color: var(--accent);
+}
+.cr-coach.is-done::before {
+  border-color: var(--accent);
+}
+.cr-coach p {
+  margin: 0;
+}
+.cr-coach-opp {
+  color: var(--muted);
+  font-size: 13px;
+}
+.cr-coach-opp strong {
+  color: var(--ink);
+}
+.cr-coach-prompt {
+  font-size: 15px;
+}
+.cr-coach-note {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+}
+.cr-ai {
+  color: var(--quiet);
+  font-size: 11px;
+}
+.cr-result {
+  margin: 0;
+  flex-basis: 100%;
+  font-size: 14px;
+}
+
+/* Time mode clock */
+.cr-clock {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 22px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.cr-clock span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cr-clock span:last-child {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.cr-clock span:last-child strong {
+  font-size: 22px;
+  color: var(--ink);
+}
+.cr-clock.is-low span:first-child {
+  color: var(--warning);
+}
+
+/* Links inside text */
+.cr-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.cr-link:hover {
+  color: var(--accent-hover);
+}
+.cr-link svg {
+  flex: none;
+}
+
+/* "From your games" strip on the library */
+.cr-strip {
+  display: grid;
+  gap: 10px;
+}
+.cr-strip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 10px;
+}
+.cr-strip-item {
+  display: grid;
+  gap: 4px;
+  height: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color 0.15s;
+}
+.cr-strip-item:hover {
+  border-color: var(--accent);
+}
+.cr-strip-item strong {
+  font-size: 14px;
+}
+.cr-strip-item span {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.cr-strip-item.is-own {
+  background: var(--surface-2);
+}
+.cr-badge {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+/* "Your games in this opening" panel */
+.cr-yours h3 {
+  margin: 6px 0 0;
+  font-size: 15px;
+}
+.cr-exits {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.cr-exits li {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.cr-exits .cr-link {
+  justify-self: start;
+  font-size: 13px;
+}
+
+@media (max-width: 850px) {
+  .cr-runner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  /* Notes sit below the board, so the bubble's tail points up. */
+  .cr-coach::before {
+    top: -7px;
+    left: 28px;
+    border-left: 1px solid var(--line);
+    border-bottom: 0;
+    border-top: 1px solid var(--line);
+  }
+  .cr-coach.is-mistake::before {
+    border-color: var(--warning);
+  }
+  .cr-coach.is-done::before {
+    border-color: var(--accent);
+  }
+}
+@media (max-width: 700px) {
+  /* Phones: board width is the screen minus gutters, shrunk on short screens so the note below stays in view. */
+  .cr-course-page {
+    --cr-board-max: min(600px, calc(100vh - 330px));
+    --cr-board-max: min(600px, calc(100dvh - 330px));
+    gap: 6px;
+    margin-top: -22px;
+  }
+  .cr-page .cr-top h1 {
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .cr-top {
+    min-height: 22px;
+    gap: 6px;
+  }
+  .cr-top-back {
+    width: 22px;
+    height: 22px;
+  }
+  .cr-top-meta {
+    font-size: 12px;
+  }
+}
+@media (max-width: 500px) {
+  .cr-top-wide {
+    display: none;
+  }
+  .cr-modes {
+    display: flex;
+    padding: 2px;
+  }
+  .cr-modes a {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 4px 6px;
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .cr-course {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+  .cr-coach {
+    padding: 14px;
+  }
+}

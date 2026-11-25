@@ -63,6 +63,13 @@
 .today-summary strong {
   color: var(--ink);
 }
+.today-due a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-weight: 600;
+}
 .today-bar {
   height: 8px;
   border-radius: 999px;

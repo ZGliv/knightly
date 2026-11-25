@@ -3,6 +3,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconArrowRight, IconCheck, IconFlame, IconTarget } from "@tabler/icons-react";
 import { practiceQueue, readSetAside } from "@/components/insights/shared";
+import { loadIndex } from "@/lib/courses/load";
+import { PERSONAL_IDS, PERSONAL_NAMES } from "@/lib/courses/personal";
+import { mostDueCourse } from "@/lib/courses/progress";
+import { loadCoursesProgress } from "@/lib/courses/storage";
 import { loadSnapshot } from "@/lib/insights/pipeline";
 import { MIN_ANALYSED_FOR_HEADLINES } from "@/lib/insights/report";
 import { openInsightsStore } from "@/lib/insights/store";
@@ -26,6 +30,22 @@ interface Day {
   steps: Step[];
   streak: number;
   focus: Focus;
+  /** The opening course with the most lines due for practice. */
+  courseDue: { id: string; name: string; due: number } | null;
+}
+
+/** Opening course lines due now, from course progress; null when none are due or the course list is unavailable. */
+async function readCourseDue(now: number): Promise<Day["courseDue"]> {
+  const top = mostDueCourse(loadCoursesProgress().progress, now);
+  if (!top) return null;
+  if (top.id === PERSONAL_IDS.white) return { ...top, name: PERSONAL_NAMES.white };
+  if (top.id === PERSONAL_IDS.black) return { ...top, name: PERSONAL_NAMES.black };
+  try {
+    const course = (await loadIndex()).courses.find((c) => c.id === top.id);
+    return course ? { ...top, name: course.name } : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Your leaks data for the session and the focus card. Null leaks when no account is linked. */
@@ -71,7 +91,7 @@ function playedGames(): SessionInput["playedGames"] {
 async function readDay(): Promise<Day> {
   const now = Date.now();
   const today = localDay(now);
-  const insights = await readInsights(now);
+  const [insights, courseDue] = await Promise.all([readInsights(now), readCourseDue(now)]);
   const repertoire = loadRepertoire();
   const steps = buildSession(
     {
@@ -94,6 +114,7 @@ async function readDay(): Promise<Day> {
     steps,
     streak: streakLength(record, today),
     focus: insights.focus,
+    courseDue,
   };
 }
 
@@ -147,6 +168,14 @@ export function TodayPage() {
         <div className="today-bar" aria-hidden>
           <span style={{ width: `${(done / day.steps.length) * 100}%` }} />
         </div>
+        {day.courseDue && (
+          <p className="today-due">
+            Opening lines due: <strong>{day.courseDue.due}</strong> in {day.courseDue.name}.{" "}
+            <Link href={`/courses/${day.courseDue.id}?mode=practice`}>
+              Practise them <IconArrowRight size={14} aria-hidden />
+            </Link>
+          </p>
+        )}
       </div>
 
       <div className="today-layout">

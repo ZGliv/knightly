@@ -1,0 +1,223 @@
+{
+  "source": "Lines from the Lichess chess-openings list (CC0), checked with Stockfish. Puzzles from the Lichess puzzle database (CC0).",
+  "courses": [
+    {
+      "id": "italian-game",
+      "name": "Italian Game",
+      "side": "white",
+      "blurb": "A classic answer to 1...e5 where White's bishop goes to c4 and aims at f7. This course plays the Giuoco Piano with c3 and d4, and the calm 4.d3 against the Two Knights Defense.",
+      "setup": [
+        "e4",
+        "e5",
+        "Nf3",
+        "Nc6",
+        "Bc4"
+      ],
+      "lineCount": 19,
+      "puzzleCount": 80
+    },
+    {
+      "id": "ruy-lopez",
+      "name": "Ruy Lopez",
+      "side": "white",
+      "blurb": "The Spanish: White puts the bishop on b5 to pressure the knight that defends e5. It leads to rich, slow middlegames and has been a top-level main line for over a century.",
+      "setup": [
+        "e4",
+        "e5",
+        "Nf3",
+        "Nc6",
+        "Bb5"
+      ],
+      "lineCount": 29,
+      "puzzleCount": 80
+    },
+    {
+      "id": "queens-gambit",
+      "name": "Queen's Gambit",
+      "side": "white",
+      "blurb": "White offers the c-pawn on move two to pull Black's d-pawn away from the centre. A solid, ambitious choice that this course covers against the Declined, Accepted, Slav and Semi-Slav.",
+      "setup": [
+        "d4",
+        "d5",
+        "c4"
+      ],
+      "lineCount": 28,
+      "puzzleCount": 80
+    },
+    {
+      "id": "london-system",
+      "name": "London System",
+      "side": "white",
+      "blurb": "A system rather than a sharp opening: White plays d4, Bf4, e3, c3 and develops calmly against almost anything. Easy to learn and hard to beat, which makes it a club favourite.",
+      "setup": [
+        "d4"
+      ],
+      "lineCount": 16,
+      "puzzleCount": 80
+    },
+    {
+      "id": "vienna-game",
+      "name": "Vienna Game",
+      "side": "white",
+      "blurb": "White plays 2.Nc3 and then often f4, a King's Gambit with the knight already out. Aggressive but more solid than the King's Gambit itself.",
+      "setup": [
+        "e4",
+        "e5",
+        "Nc3"
+      ],
+      "lineCount": 19,
+      "puzzleCount": 80
+    },
+    {
+      "id": "scotch-game",
+      "name": "Scotch Game",
+      "side": "white",
+      "blurb": "White opens the centre on move three with d4. Clear, active play that avoids the long theory of the Ruy Lopez and is popular at every level.",
+      "setup": [
+        "e4",
+        "e5",
+        "Nf3",
+        "Nc6",
+        "d4"
+      ],
+      "lineCount": 15,
+      "puzzleCount": 80
+    },
+    {
+      "id": "kings-gambit",
+      "name": "King's Gambit",
+      "side": "white",
+      "blurb": "The most romantic 1.e4 opening: White gives up the f-pawn on move two for open lines and a fast attack. Sharp and risky, best for players who enjoy tactics.",
+      "setup": [
+        "e4",
+        "e5",
+        "f4"
+      ],
+      "lineCount": 14,
+      "puzzleCount": 80
+    },
+    {
+      "id": "english-opening",
+      "name": "English Opening",
+      "side": "white",
+      "blurb": "White starts with the c-pawn and fights for d5 from the side. A flexible, positional opening that often plays like a Sicilian with the colours reversed.",
+      "setup": [
+        "c4"
+      ],
+      "lineCount": 18,
+      "puzzleCount": 80
+    },
+    {
+      "id": "sicilian-najdorf",
+      "name": "Sicilian Najdorf",
+      "side": "black",
+      "blurb": "The most popular fighting answer to 1.e4. Black accepts a slightly passive position for rich counterplay; ...a6 is the move that defines the Najdorf.",
+      "setup": [
+        "e4",
+        "c5",
+        "Nf3",
+        "d6",
+        "d4",
+        "cxd4",
+        "Nxd4",
+        "Nf6",
+        "Nc3",
+        "a6"
+      ],
+      "lineCount": 11,
+      "puzzleCount": 80
+    },
+    {
+      "id": "french-defense",
+      "name": "French Defense",
+      "side": "black",
+      "blurb": "Black answers 1.e4 with ...e6 and ...d5, building a solid pawn chain and attacking White's centre later. A good choice for patient players who like counterattacks.",
+      "setup": [
+        "e4",
+        "e6"
+      ],
+      "lineCount": 20,
+      "puzzleCount": 80
+    },
+    {
+      "id": "caro-kann",
+      "name": "Caro-Kann Defense",
+      "side": "black",
+      "blurb": "A solid answer to 1.e4: Black prepares ...d5 with ...c6. It is like the French, but the c8 bishop gets out before the pawns close it in.",
+      "setup": [
+        "e4",
+        "c6"
+      ],
+      "lineCount": 39,
+      "puzzleCount": 80
+    },
+    {
+      "id": "scandinavian",
+      "name": "Scandinavian Defense",
+      "side": "black",
+      "blurb": "Black hits e4 on the very first move with ...d5 and recaptures with the queen. Easy to learn, with a clear setup Black can reach against almost anything.",
+      "setup": [
+        "e4",
+        "d5"
+      ],
+      "lineCount": 13,
+      "puzzleCount": 80
+    },
+    {
+      "id": "petrov",
+      "name": "Petrov Defense",
+      "side": "black",
+      "blurb": "Black meets 2.Nf3 by counterattacking e4 instead of defending e5. One of the most solid defences to 1.e4, used by many world-class players.",
+      "setup": [
+        "e4",
+        "e5",
+        "Nf3",
+        "Nf6"
+      ],
+      "lineCount": 16,
+      "puzzleCount": 80
+    },
+    {
+      "id": "kings-indian",
+      "name": "King's Indian Defense",
+      "side": "black",
+      "blurb": "Black lets White build a big pawn centre, then attacks it with ...e5 or ...c5 and often storms the kingside. A dynamic choice against 1.d4.",
+      "setup": [
+        "d4",
+        "Nf6",
+        "c4",
+        "g6"
+      ],
+      "lineCount": 16,
+      "puzzleCount": 80
+    },
+    {
+      "id": "queens-gambit-declined",
+      "name": "Queen's Gambit Declined",
+      "side": "black",
+      "blurb": "The classical answer to the Queen's Gambit: Black holds d5 with ...e6 and develops solidly. A sound choice that has stood up at the highest level for over a hundred years.",
+      "setup": [
+        "d4",
+        "d5",
+        "c4",
+        "e6"
+      ],
+      "lineCount": 17,
+      "puzzleCount": 80
+    },
+    {
+      "id": "slav-defense",
+      "name": "Slav Defense",
+      "side": "black",
+      "blurb": "Black defends d5 with ...c6 instead of ...e6, so the c8 bishop stays free. Very solid against 1.d4 and 2.c4.",
+      "setup": [
+        "d4",
+        "d5",
+        "c4",
+        "c6"
+      ],
+      "lineCount": 16,
+      "puzzleCount": 80
+    }
+  ]
+}
